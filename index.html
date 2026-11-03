@@ -77,7 +77,8 @@ h2 { font-size: 22px; }
 .season { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 500; white-space: nowrap; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(35, 64, 42, .05); min-width: 0; box-sizing: border-box; }
 .lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); }
-.art { flex: none; width: 128px; height: 128px; }
+.art { flex: none; width: clamp(64px, 8vw, 128px); height: clamp(64px, 8vw, 128px); }
+.c-text { flex: 1 1 auto; }
 .art .l1 { fill: var(--leaf-1); } .art .l2 { fill: var(--leaf-2); } .art .l3 { fill: var(--leaf-3); }
 .art .st { fill: none; stroke: var(--leaf-1); stroke-width: 2; stroke-linecap: round; }
 .art .pot { fill: var(--pot); stroke: var(--pot-line); stroke-width: 1.5; }
