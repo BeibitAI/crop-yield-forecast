@@ -1,0 +1,9 @@
+# Исходные выгрузки FAOSTAT, NASA POWER и ERA5: тяжёлые, сборщик скачивает их заново
+data/raw/
+
+# Временные файлы сборщика
+*.part
+
+node_modules/
+.DS_Store
+Thumbs.db
