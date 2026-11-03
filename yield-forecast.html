@@ -193,6 +193,25 @@ details summary { cursor: pointer; font-weight: 500; }
 .w-item b { display: block; font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.2; }
 .w-item p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
 .w-t { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wx { display: flex; flex-direction: column; gap: 16px; }
+.wx-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.wx-ctl { display: flex; flex-wrap: wrap; gap: 8px; }
+.wx-ctl select, .wx-ctl button { font-size: 15px; padding: 8px 12px; border-radius: 10px; }
+.wx-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 24px; align-items: center; }
+@media (max-width: 760px) { .wx-grid { grid-template-columns: minmax(0, 1fr); } }
+.wx-now { display: flex; gap: 18px; align-items: center; }
+.wx-ic { flex: none; width: 72px; height: 72px; border-radius: 50%; background: var(--grain-soft); color: var(--forest); display: grid; place-items: center; }
+.wx-ic svg { width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.wx-t { font-family: var(--display); font-weight: 700; font-size: 52px; line-height: 1; color: var(--forest); font-variant-numeric: tabular-nums; }
+.wx-d { font-size: 18px; font-weight: 500; }
+.wx-rain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 520px) { .wx-rain { grid-template-columns: minmax(0, 1fr); } }
+.wx-cell { border-top: 2px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+.wx-cell b { font-family: var(--display); font-size: 30px; font-weight: 700; color: var(--forest); font-variant-numeric: tabular-nums; }
+.wx-cell .w-t { margin: 0; }
+.wx-cell span { font-size: 14px; color: var(--muted); }
+.wx-tip { background: var(--grain-soft); border-radius: 10px; padding: 10px 14px; font-size: 16px; max-width: 80ch; }
 .tip-serif { font-family: var(--display); font-size: 19px; line-height: 1.45; max-width: 46ch; }
 .bags { display: flex; flex-wrap: wrap; gap: 6px; }
 .bag { width: 34px; height: 40px; }
@@ -249,6 +268,7 @@ details.expert > summary { font-family: var(--display); font-size: 16px; font-we
   <nav aria-label="Разделы">
     <ul class="nav">
       <li><a href="#verdict" class="on"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></svg>Главная</a></li>
+      <li><a href="#pogoda"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3 3 0 0 0 7 18z"/></svg>Погода</a></li>
       <li><a href="#ogorod"><svg viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4 3-7 8-7 0 5-3 7-8 7zM12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 5.5 7 5.5z"/></svg>Мой огород</a></li>
       <li><a href="#grafik"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l3-4 3 2 4-6"/></svg>По годам</a></li>
       <li><a href="#slova"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2zM4 5v16"/></svg>Словарик</a></li>
@@ -271,6 +291,19 @@ details.expert > summary { font-family: var(--display); font-size: 16px; font-we
     <span class="season" id="seasonChip"></span>
   </header>
   <div class="issues" id="issues"></div>
+
+  <section class="card wx" id="pogoda">
+    <div class="wx-head">
+      <div class="lbl">Погода сейчас</div>
+      <div class="wx-ctl">
+        <label for="wx-city" class="sr">Город</label>
+        <select id="wx-city"></select>
+        <button id="wx-geo">Моё место</button>
+      </div>
+    </div>
+    <div id="wx-body" aria-live="polite"><p class="c-sub">Загружаем погоду…</p></div>
+    <p class="v-note">Погода и прогноз осадков: <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0). Обновляются при открытии страницы.</p>
+  </section>
 
   <section class="verdict" id="verdict" aria-live="polite"></section>
 
@@ -1204,6 +1237,112 @@ $('importBtn').onclick = () => {
 
 let rz;
 window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (lastR) { drawChart(lastR); renderBayes(lastR); } }, 120); });
+// ---------- погода сейчас: Open-Meteo, без ключа ----------
+// В Claude-артефакте внешние запросы закрыты, поэтому блок работает только на обычном хостинге (GitHub Pages).
+const CITIES = [
+  ['Астана', 51.17, 71.43], ['Алматы', 43.24, 76.89], ['Шымкент', 42.32, 69.59], ['Караганда', 49.80, 73.10],
+  ['Костанай', 53.21, 63.62], ['Петропавловск', 54.87, 69.15], ['Кокшетау', 53.28, 69.39], ['Павлодар', 52.29, 76.95],
+  ['Усть-Каменогорск', 49.95, 82.61], ['Семей', 50.41, 80.23], ['Актобе', 50.28, 57.17], ['Уральск', 51.23, 51.37],
+];
+const WKEY = 'yield-weather-v1';
+let WX = { city: 'Астана' };
+try { const w = JSON.parse(localStorage.getItem(WKEY)); if (w && w.city) WX = w; } catch (e) {}
+const saveWX = () => { try { localStorage.setItem(WKEY, JSON.stringify(WX)); } catch (e) {} };
+
+const WICON = {
+  cloud: '<svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3 3 0 0 0 7 18z"/></svg>',
+  snow: '<svg viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9 4.5l3 2 3-2M9 19.5l3-2 3 2"/></svg>',
+  storm: '<svg viewBox="0 0 24 24"><path d="M7 15h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3 3 0 0 0 7 15zM13 15l-3 5h4l-2 3"/></svg>',
+};
+// Коды погоды WMO → описание и значок
+function wmo(code) {
+  if (code === 0) return ['Ясно', ICON.sun];
+  if (code === 1) return ['Преимущественно ясно', ICON.sun];
+  if (code === 2) return ['Переменная облачность', WICON.cloud];
+  if (code === 3) return ['Пасмурно', WICON.cloud];
+  if (code === 45 || code === 48) return ['Туман', WICON.cloud];
+  if (code >= 51 && code <= 57) return ['Морось', ICON.drop];
+  if (code === 61 || code === 80) return ['Небольшой дождь', ICON.drop];
+  if (code === 63 || code === 81) return ['Дождь', ICON.drop];
+  if (code === 65 || code === 82) return ['Сильный дождь', ICON.drop];
+  if (code === 66 || code === 67) return ['Ледяной дождь', ICON.drop];
+  if (code === 71 || code === 85) return ['Небольшой снег', WICON.snow];
+  if (code === 73 || code === 77) return ['Снег', WICON.snow];
+  if (code === 75 || code === 86) return ['Сильный снег', WICON.snow];
+  if (code >= 95) return [code === 95 ? 'Гроза' : 'Гроза с градом', WICON.storm];
+  return ['Погода', WICON.cloud];
+}
+const rainWords = p => p == null ? 'нет данных' : p < 20 ? 'осадков почти наверняка не будет' : p < 50 ? 'возможны небольшие осадки' : p < 80 ? 'скорее всего будут осадки' : 'почти наверняка осадки';
+const pct = p => p == null ? '—' : `${Math.round(p)}%`;
+
+function fillCities() {
+  const geo = WX.city === '__geo' ? '<option value="__geo" selected>Ваше место</option>' : '';
+  $('wx-city').innerHTML = geo + CITIES.map(([n]) => `<option value="${n}"${n === WX.city ? ' selected' : ''}>${n}</option>`).join('');
+}
+
+async function loadWeather() {
+  const box = $('wx-body');
+  let name, lat, lon;
+  if (WX.city === '__geo' && Number.isFinite(WX.lat)) { name = 'ваше место'; lat = WX.lat; lon = WX.lon; }
+  else { [name, lat, lon] = CITIES.find(c => c[0] === WX.city) || CITIES[0]; }
+  box.innerHTML = '<p class="c-sub">Загружаем погоду…</p>';
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lon.toFixed(2)}`
+    + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m'
+    + '&hourly=precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+    + '&wind_speed_unit=ms&timezone=auto&forecast_days=2';
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    renderWeather(await r.json(), name);
+  } catch (e) {
+    const onPages = typeof location !== 'undefined' && /github\.io$/.test(location.hostname);
+    box.innerHTML = `<p class="c-sub">${onPages
+      ? 'Не удалось загрузить погоду. Проверьте интернет и обновите страницу.'
+      : 'Здесь страница не может обращаться к внешним сайтам. Текущая погода показывается на сайте <a href="https://beibitai.github.io/crop-yield-forecast/">beibitai.github.io/crop-yield-forecast</a>.'}</p>`;
+  }
+}
+
+function renderWeather(d, name) {
+  const c = d.current, [txt, icon] = wmo(c.weather_code);
+  const hours = d.hourly.time, probs = d.hourly.precipitation_probability || [];
+  let i = hours.indexOf(c.time.slice(0, 13) + ':00');
+  if (i < 0) i = 0;
+  const near = probs.slice(i, i + 6).filter(v => v != null);
+  const next6 = near.length ? Math.max(...near) : null;
+  const dd = d.daily, dp = dd.precipitation_probability_max || [];
+  const t = (a, b) => `${Math.round(a)}…${Math.round(b)}°`;
+  let h = `<div class="wx-grid">
+    <div class="wx-now"><span class="wx-ic" aria-hidden="true">${icon}</span><div>
+      <div class="wx-t">${c.temperature_2m > 0 ? '+' : ''}${Math.round(c.temperature_2m)}°</div>
+      <div class="wx-d">${txt}, ${esc(name)}</div>
+      <div class="c-sub">Ощущается как ${Math.round(c.apparent_temperature)}° · ветер ${fmt(c.wind_speed_10m, 1)} м/с · влажность ${Math.round(c.relative_humidity_2m)}%</div>
+    </div></div>
+    <div class="wx-rain">
+      <div class="wx-cell"><div class="w-t">Ближайшие 6 часов</div><b>${pct(next6)}</b><span>${rainWords(next6)}</span></div>
+      <div class="wx-cell"><div class="w-t">Сегодня</div><b>${pct(dp[0])}</b><span>шанс осадков · ${t(dd.temperature_2m_min[0], dd.temperature_2m_max[0])}</span></div>
+      <div class="wx-cell"><div class="w-t">Завтра</div><b>${pct(dp[1])}</b><span>шанс осадков · ${t(dd.temperature_2m_min[1], dd.temperature_2m_max[1])}</span></div>
+    </div></div>`;
+  // Подсказка про полив — только в огородный сезон, апрель–сентябрь
+  const month = +c.time.slice(5, 7);
+  if (month >= 4 && month <= 9 && next6 != null) {
+    h += `<p class="wx-tip">${next6 < 30
+      ? 'Дождя в ближайшие часы не ждут. Если земля сухая, полейте огород вечером.'
+      : next6 >= 60 ? 'Скоро ожидаются осадки, сегодня поливать огород не нужно.' : 'Осадки возможны. Перед поливом проверьте, сухая ли земля.'}</p>`;
+  }
+  $('wx-body').innerHTML = h;
+}
+
+$('wx-city').onchange = e => { WX = { city: e.target.value }; saveWX(); fillCities(); loadWeather(); };
+$('wx-geo').onclick = () => {
+  if (!navigator.geolocation) { $('wx-body').insertAdjacentHTML('beforeend', '<p class="c-sub">Браузер не умеет определять место. Выберите город из списка.</p>'); return; }
+  navigator.geolocation.getCurrentPosition(
+    p => { WX = { city: '__geo', lat: Math.round(p.coords.latitude * 100) / 100, lon: Math.round(p.coords.longitude * 100) / 100 }; saveWX(); fillCities(); loadWeather(); },
+    () => { $('wx-body').insertAdjacentHTML('beforeend', '<p class="c-sub">Не удалось определить место. Выберите город из списка.</p>'); },
+    { timeout: 10000, maximumAge: 600000 });
+};
+fillCities();
+loadWeather();
+
 // Боковое меню: подсветка раздела и раскрытие свёрнутых разделов при переходе
 function goTo(id) {
   const el = document.getElementById(id);
