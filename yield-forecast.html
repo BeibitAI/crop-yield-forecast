@@ -1,0 +1,1216 @@
+<title>Прогноз урожайности культур</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=PT+Serif:wght@400;700&display=swap">
+<style>
+/* Layout: тёмно-зелёная боковая панель с разделами, справа сетка карточек на кремовом фоне.
+   Сознательно одна светлая тема («садовая тетрадь»), поэтому тёмных вариантов токенов нет. */
+:root {
+  --bg: #F3F0E8;          /* кремовый фон страницы */
+  --surface: #FBFAF6;     /* карточки */
+  --ink: #1F2B22;
+  --muted: #687264;
+  --line: #E4DFD3;
+  --forest: #23402A;      /* боковая панель, главные кнопки */
+  --forest-ink: #EDF0E6;
+  --field: #4E7148;       /* фактический урожай */
+  --grain: #2F4E33;       /* прогноз */
+  --grain-soft: #E4E8DA;  /* мягкая шалфейная заливка */
+  --leaf-1: #3E5E3A; --leaf-2: #5B7F52; --leaf-3: #7A9A6C;
+  --pot: #EFEBE2; --pot-line: #D6CFBF;
+  --bad: #A8523A;
+  --bad-soft: #F1DDD3;
+  --good: #3D6B45;
+  --good-soft: #E1EADB;
+  --display: "PT Serif", Georgia, "Times New Roman", serif;
+  --body: "Golos Text", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+html, body { min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.app { display: grid; grid-template-columns: 228px minmax(0, 1fr); min-height: 100vh; }
+.side { background: var(--forest); color: var(--forest-ink); position: sticky; top: 0; height: 100vh; box-sizing: border-box; padding: 26px 16px; display: flex; flex-direction: column; gap: 28px; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; font-family: var(--display); font-size: 20px; color: var(--forest-ink); text-decoration: none; }
+.brand svg { width: 40px; height: 40px; }
+.brand svg path { fill: none; stroke: var(--forest-ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.nav { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.nav a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; color: var(--forest-ink); text-decoration: none; font-size: 15px; }
+.nav a:hover { background: color-mix(in srgb, var(--forest-ink) 10%, transparent); }
+.nav a.on { background: var(--surface); color: var(--forest); font-weight: 600; }
+.nav a:focus-visible { outline: 2px solid var(--forest-ink); outline-offset: 2px; }
+.nav svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.side-foot { margin-top: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 14px; opacity: .92; }
+.side-foot .ring { width: 64px; height: 64px; border-radius: 50%; background: color-mix(in srgb, var(--forest-ink) 12%, transparent); display: grid; place-items: center; }
+.side-foot svg { width: 34px; height: 34px; fill: none; stroke: var(--forest-ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; height: auto; flex-direction: row; align-items: center; gap: 14px; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .brand span, .side-foot { display: none; }
+  .brand { padding: 0; }
+  .brand svg { width: 32px; height: 32px; }
+  .nav { flex-direction: row; overflow-x: auto; gap: 2px; min-width: 0; scrollbar-width: none; }
+  .nav a { padding: 8px 10px; white-space: nowrap; font-size: 14px; }
+  .nav svg { display: none; }
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--forest); }
+.wrap { max-width: 1120px; width: 100%; box-sizing: border-box; margin: 0 auto; padding-block: 30px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px; }
+@media (min-width: 901px) { .wrap { padding-left: 32px; padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
+h1, h2 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; letter-spacing: -0.005em; }
+h1 { font-size: clamp(28px, 4.4vw, 38px); line-height: 1.15; }
+h2 { font-size: 22px; }
+.topbar { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 20px; }
+.season { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(35, 64, 42, .05); min-width: 0; box-sizing: border-box; }
+.lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); }
+.art { flex: none; width: 128px; height: 128px; }
+.art .l1 { fill: var(--leaf-1); } .art .l2 { fill: var(--leaf-2); } .art .l3 { fill: var(--leaf-3); }
+.art .st { fill: none; stroke: var(--leaf-1); stroke-width: 2; stroke-linecap: round; }
+.art .pot { fill: var(--pot); stroke: var(--pot-line); stroke-width: 1.5; }
+.art .can { fill: var(--grain-soft); stroke: var(--leaf-1); stroke-width: 2; stroke-linejoin: round; }
+.art .drop { fill: var(--leaf-3); }
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; background: var(--grain-soft); border: 1px solid var(--line); border-radius: 16px; padding: 18px 24px; }
+.banner svg { width: 46px; height: 46px; flex: none; }
+.banner .t { flex: 1 1 260px; min-width: 0; }
+.banner .t b { font-family: var(--display); font-weight: 400; font-size: 20px; display: block; }
+.banner .t span { color: var(--muted); font-size: 15px; }
+.btn-dark { display: inline-flex; align-items: center; gap: 10px; background: var(--forest); color: var(--forest-ink); text-decoration: none; border-radius: 10px; padding: 12px 20px; font-weight: 500; }
+.btn-dark:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 500; }
+.lead { color: var(--muted); max-width: 64ch; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.note { border: 1px dashed var(--grain); background: var(--grain-soft); padding: 10px 14px; border-radius: 8px; max-width: 80ch; font-size: 14px; }
+.issues { border-left: 3px solid var(--bad); padding: 8px 12px; color: var(--ink); font-size: 14px; }
+.issues:empty { display: none; }
+
+.top { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+@media (max-width: 820px) { .top { grid-template-columns: minmax(0, 1fr); } }
+.fc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.fc-year { font-family: var(--display); font-size: 15px; }
+.fc-num { font-family: var(--display); font-size: 48px; line-height: 1; color: var(--grain); font-variant-numeric: tabular-nums; }
+.fc-num small { font-family: var(--body); font-size: 16px; color: var(--muted); margin-left: 6px; }
+.fc-range { font-variant-numeric: tabular-nums; }
+.fc-meta { color: var(--muted); font-size: 13px; }
+.fc hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
+.chip { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--grain-soft); color: var(--grain); font-weight: 600; }
+.chart { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(35, 64, 42, .05); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 0; vertical-align: middle; margin-right: 6px; border-top: 2.5px solid var(--field); }
+.legend i.bt { border-top: 2px dashed var(--grain); }
+.legend i.fcm { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--grain); }
+#chart svg { display: block; width: 100%; height: auto; }
+#chart .grid { stroke: var(--line); stroke-width: 1; }
+#chart .ax { fill: var(--muted); font: 12px var(--mono); }
+#chart .act { fill: none; stroke: var(--field); stroke-width: 2.5; stroke-linejoin: round; }
+#chart .actdot { fill: var(--field); }
+#chart .bt { fill: none; stroke: var(--grain); stroke-width: 2; stroke-dasharray: 5 4; }
+#chart .band { fill: var(--grain-soft); stroke: var(--grain); stroke-width: 1; }
+#chart .link { stroke: var(--grain); stroke-width: 1.5; stroke-dasharray: 2 4; fill: none; }
+#chart .fcdot { fill: var(--grain); stroke: var(--surface); stroke-width: 2; }
+#chart .fclab { fill: var(--grain); font: 600 13px var(--mono); }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.hint { color: var(--muted); font-size: 15px; max-width: 70ch; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.best td { background: var(--grain-soft); }
+.pos { color: var(--good); }
+.neg { color: var(--bad); }
+.yearscroll { max-height: 420px; overflow: auto; }
+
+.data { display: flex; flex-direction: column; gap: 16px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
+label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+input, select, textarea { font: 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--grain); outline-offset: 1px; }
+.dt input { width: 100%; min-width: 64px; font-family: var(--mono); font-variant-numeric: tabular-nums; padding: 4px 6px; }
+.dt td { padding: 3px 4px; }
+button { font: 500 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--forest); border-color: var(--forest); color: var(--forest-ink); }
+button.del { padding: 3px 8px; color: var(--muted); }
+button.warn { border-color: var(--bad); color: var(--bad); }
+.target { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.target input { width: 120px; font-family: var(--mono); }
+.import { display: flex; flex-direction: column; gap: 8px; }
+.import textarea { width: 100%; min-height: 90px; font-family: var(--mono); font-size: 13px; box-sizing: border-box; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.msg { font-size: 13px; color: var(--muted); }
+.how { display: flex; flex-direction: column; gap: 10px; }
+.how ul { margin: 0; padding-left: 20px; color: var(--muted); max-width: 80ch; display: flex; flex-direction: column; gap: 6px; }
+details summary { cursor: pointer; font-weight: 500; }
+.bayes-ctl { display: flex; flex-wrap: wrap; gap: 12px; }
+.bayes-ctl input { width: 110px; font-family: var(--mono); }
+.risk { font-family: var(--display); font-size: 40px; line-height: 1; color: var(--bad); font-variant-numeric: tabular-nums; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+#dens svg { display: block; width: 100%; height: auto; }
+#dens .grid { stroke: var(--line); stroke-width: 1; }
+#dens .ax { fill: var(--muted); font: 12px var(--mono); }
+#dens .curve { fill: var(--grain-soft); stroke: var(--grain); stroke-width: 2; }
+#dens .below { fill: var(--bad-soft); stroke: none; }
+#dens .thr { stroke: var(--bad); stroke-width: 1.5; stroke-dasharray: 4 3; }
+#dens .thrlab { fill: var(--bad); font: 600 12px var(--mono); }
+#dens .ci { fill: var(--grain); opacity: .55; }
+#dens .mid { stroke: var(--grain); stroke-width: 1.5; }
+.legend i.below { width: 12px; height: 12px; border: 0; background: var(--bad-soft); outline: 1px solid var(--bad); }
+.legend i.ci { width: 18px; height: 6px; border: 0; background: var(--grain); opacity: .55; }
+.verdict { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; font-size: 17px; }
+.verdict:empty { display: none; }
+.verdict > * { grid-column: span 12; }
+@media (min-width: 761px) {
+  .verdict > .c-main { grid-column: span 7; }
+  .verdict > .c-chance { grid-column: span 5; }
+  .verdict > .c-acc, .verdict > .c-tip { grid-column: span 6; }
+}
+.c-main, .c-chance, .c-tip { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; }
+.c-text { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.c-acc { display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 520px) { .c-main .art, .c-tip .art { display: none; } .c-chance .art { width: 90px; height: 90px; } }
+.v-status { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.v-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; }
+.v-dot.bad { background: var(--bad); } .v-dot.mid { background: var(--leaf-3); } .v-dot.good { background: var(--good); }
+.v-big { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 4.6vw, 38px); line-height: 1.12; text-wrap: balance; }
+.v-num { font-family: var(--display); font-weight: 700; font-size: clamp(38px, 6vw, 52px); line-height: 1; color: var(--forest); font-variant-numeric: tabular-nums; }
+.v-num small { font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--muted); margin-left: 6px; }
+.v-lead { font-size: 18px; max-width: 52ch; text-wrap: pretty; }
+.c-sub { color: var(--muted); font-size: 16px; max-width: 36ch; }
+.w-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px 24px; margin-top: 14px; }
+.w-item { display: flex; gap: 14px; align-items: center; }
+.w-ic { flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--grain-soft); color: var(--forest); position: relative; }
+.w-ic svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.w-ic i { position: absolute; right: -2px; bottom: -2px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--surface); display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 700; color: var(--surface); }
+.w-ic i.bad { background: var(--bad); } .w-ic i.good { background: var(--good); } .w-ic i.mid { background: var(--leaf-3); }
+.w-item b { display: block; font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.2; }
+.w-item p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+.w-t { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.tip-serif { font-family: var(--display); font-size: 19px; line-height: 1.45; max-width: 46ch; }
+.bags { display: flex; flex-wrap: wrap; gap: 6px; }
+.bag { width: 34px; height: 40px; }
+.bag path { stroke-width: 1.6; stroke-linejoin: round; }
+.bag.full path { fill: var(--grain); stroke: var(--grain); }
+.bag.extra path { fill: var(--good); stroke: var(--good); }
+.bag.empty path { fill: none; stroke: var(--muted); stroke-dasharray: 3 2; }
+.bag .tie { fill: none !important; stroke: var(--surface) !important; stroke-dasharray: none !important; stroke-width: 2; }
+.bag.empty .tie { stroke: var(--muted) !important; }
+.bags-cap { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; color: var(--muted); margin-top: -10px; }
+.bags-cap i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.bags-cap i.full { background: var(--grain); } .bags-cap i.extra { background: var(--good); } .bags-cap i.empty { border: 1.5px dashed var(--muted); }
+.v-exact summary { cursor: pointer; color: var(--muted); font-size: 15px; }
+.v-exact p { margin: 8px 0 0; font-size: 15px; max-width: 72ch; }
+.v-note { color: var(--muted); font-size: 14px; max-width: 80ch; }
+.garden { display: flex; flex-direction: column; gap: 16px; font-size: 17px; }
+.garden h2 { font-size: 22px; }
+.g-weather { display: flex; flex-wrap: wrap; gap: 14px 24px; }
+.seg { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.seg legend { font-size: 15px; color: var(--muted); padding: 0; margin-bottom: 6px; width: 100%; }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg label { cursor: pointer; padding: 9px 14px; border: 1px solid var(--line); border-radius: 99px; font-size: 16px; background: var(--bg); }
+.seg input:checked + label { background: var(--forest); border-color: var(--forest); color: var(--surface); font-weight: 600; }
+.seg input:focus-visible + label { outline: 2px solid var(--grain); outline-offset: 2px; }
+.g-rows { display: flex; flex-direction: column; gap: 10px; }
+.g-row { display: grid; grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 1fr) minmax(130px, 1fr) minmax(0, 1.6fr) auto; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+@media (max-width: 760px) { .g-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .g-row .g-res { grid-column: 1 / -1; } }
+.g-row select, .g-row input { font-size: 16px; padding: 8px 10px; width: 100%; box-sizing: border-box; }
+.g-qty { display: flex; align-items: center; gap: 8px; }
+.g-qty input { width: 90px; font-family: var(--mono); }
+.g-qty span { color: var(--muted); font-size: 15px; white-space: nowrap; }
+.g-res b { font-family: var(--display); font-weight: 500; font-size: 20px; }
+.g-res small { display: block; color: var(--muted); font-size: 14px; }
+.g-total { background: var(--grain-soft); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.g-total:empty { display: none; }
+.g-total .big { font-family: var(--display); font-weight: 600; font-size: clamp(24px, 5vw, 34px); }
+.explain { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin: 0; }
+@media (max-width: 700px) { .explain { grid-template-columns: minmax(0, 1fr); } }
+.explain dt { font-weight: 600; }
+.explain dd { margin: 2px 0 0; color: var(--muted); }
+.source { color: var(--muted); font-size: 13px; max-width: 90ch; margin: 0; }
+details.expert { border-top: 1px solid var(--line); padding-top: 16px; }
+details.expert > summary { font-family: var(--display); font-size: 16px; font-weight: 500; cursor: pointer; padding: 4px 0; }
+.expert-body { display: flex; flex-direction: column; gap: 32px; padding-top: 20px; }
+@media (prefers-reduced-motion: no-preference) { button { transition: border-color .15s; } }
+</style>
+
+<div class="app">
+<aside class="side">
+  <a class="brand" href="#verdict" aria-label="Урожай — на главную">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 34C16 24 22 15 31 7"/><path d="M20 22c-6 0-10-3-11-9 6 0 10 3 11 9z"/><path d="M24 16c0-6 3-9 8-10 0 6-3 9-8 10z"/><path d="M16 28c-5 1-8-1-10-5 5-1 8 1 10 5z"/><path d="M22 23c5-2 9-1 11 3-5 2-9 1-11-3z"/></svg>
+    <span>Урожай</span>
+  </a>
+  <nav aria-label="Разделы">
+    <ul class="nav">
+      <li><a href="#verdict" class="on"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></svg>Главная</a></li>
+      <li><a href="#ogorod"><svg viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4 3-7 8-7 0 5-3 7-8 7zM12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 5.5 7 5.5z"/></svg>Мой огород</a></li>
+      <li><a href="#grafik"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l3-4 3 2 4-6"/></svg>По годам</a></li>
+      <li><a href="#slova"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2zM4 5v16"/></svg>Словарик</a></li>
+      <li><a href="#specialist"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Специалистам</a></li>
+      <li><a href="#dannye"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg>Данные</a></li>
+    </ul>
+  </nav>
+  <div class="side-foot">
+    <div class="ring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9M12 12c0-4 3-7 8-7 0 5-3 7-8 7zM12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 5.5 7 5.5z"/></svg></div>
+    <div>Хорошего урожая<br>и тёплого лета!</div>
+  </div>
+</aside>
+
+<main class="wrap">
+  <header class="topbar">
+    <div>
+      <h1>Каким будет урожай?</h1>
+      <p class="lead">Сравниваем погоду этого лета с прошлыми годами. Простыми словами.</p>
+    </div>
+    <span class="season" id="seasonChip"></span>
+  </header>
+  <div class="issues" id="issues"></div>
+
+  <section class="verdict" id="verdict" aria-live="polite"></section>
+
+  <section class="garden card" id="ogorod">
+    <h2>Посчитайте урожай своего огорода</h2>
+    <p class="hint">Выберите, что вы сажаете и сколько. Мы прикинем, сколько можно собрать при погоде этого лета.</p>
+    <div class="g-weather">
+      <fieldset class="seg"><legend>Каким было лето?</legend>
+        <input type="radio" name="g-heat" id="g-heat-cool" value="cool"><label for="g-heat-cool">Прохладное</label>
+        <input type="radio" name="g-heat" id="g-heat-normal" value="normal"><label for="g-heat-normal">Обычное</label>
+        <input type="radio" name="g-heat" id="g-heat-hot" value="hot"><label for="g-heat-hot">Жаркое</label>
+      </fieldset>
+      <fieldset class="seg"><legend>Дожди</legend>
+        <input type="radio" name="g-rain" id="g-rain-dry" value="dry"><label for="g-rain-dry">Сухо</label>
+        <input type="radio" name="g-rain" id="g-rain-normal" value="normal"><label for="g-rain-normal">Как обычно</label>
+        <input type="radio" name="g-rain" id="g-rain-wet" value="wet"><label for="g-rain-wet">Дождливо</label>
+      </fieldset>
+      <fieldset class="seg"><legend>Как вы поливаете?</legend>
+        <input type="radio" name="g-water" id="g-water-regular" value="regular"><label for="g-water-regular">Регулярно</label>
+        <input type="radio" name="g-water" id="g-water-some" value="some"><label for="g-water-some">Иногда</label>
+        <input type="radio" name="g-water" id="g-water-none" value="none"><label for="g-water-none">Не поливаю</label>
+      </fieldset>
+    </div>
+    <p class="msg" id="g-auto"></p>
+    <div class="g-rows" id="g-rows"></div>
+    <div class="row"><button id="g-add">Добавить грядку</button><button id="g-reset">Вернуть пример</button></div>
+    <div class="g-total" id="g-total" aria-live="polite"></div>
+    <p class="v-note">Средние урожаи взяты из справочников огородника для открытого грунта и теплиц. Сорт, почва и уход сильно меняют результат, поэтому это ориентир, а не точный расчёт. Ваши грядки сохраняются только в этом браузере.</p>
+  </section>
+
+  <section class="block" id="grafik">
+    <h2>Урожай по годам</h2>
+    <p class="hint">Зелёная линия — сколько собирали на самом деле. Чем выше линия, тем лучше был урожай. Видно, что после жарких и сухих лет она проваливается вниз. Пунктир — наши расчёты для прошлых лет: чем ближе он к зелёной линии, тем лучше работает прогноз.</p>
+    <figure class="chart">
+      <div class="legend">
+        <span><i></i>Сколько собрали на самом деле</span>
+        <span><i class="bt"></i>Наш расчёт для прошлых лет</span>
+        <span><i class="fcm"></i>Прогноз на этот год</span>
+      </div>
+      <div id="chart"></div>
+      <p class="msg" id="chartUnit"></p>
+    </figure>
+  </section>
+
+  <section class="block" id="slova">
+    <h2>Что значат слова на сайте</h2>
+    <dl class="explain card">
+      <div><dt>Обычный урожай</dt><dd>Средний урожай за последние 10 лет. С ним мы сравниваем этот год.</dd></div>
+      <div><dt>10 мешков</dt><dd>Просто для наглядности. «9 мешков вместо 10» значит, что зерна соберут на десятую часть меньше обычного.</dd></div>
+      <div><dt>«7 шансов из 10»</dt><dd>Если бы такое лето повторилось 10 раз, так случилось бы примерно 7 раз.</dd></div>
+      <div><dt>ц/га (центнер с гектара)</dt><dd>Так урожай считают на полях: сколько центнеров зерна (1 центнер — 100 кг) собрали с участка 100 на 100 метров.</dd></div>
+    </dl>
+  </section>
+
+  <div class="banner">
+    <svg viewBox="0 0 48 48" aria-hidden="true" class="art"><path class="st" d="M24 44V20"/><ellipse class="l1" cx="17" cy="22" rx="5" ry="11" transform="rotate(-35 17 22)"/><ellipse class="l2" cx="31" cy="18" rx="5" ry="11" transform="rotate(35 31 18)"/><ellipse class="l3" cx="24" cy="10" rx="4" ry="8"/></svg>
+    <div class="t"><b>А как дела в вашем огороде?</b><span>Посчитайте, сколько соберёте с грядок при погоде этого лета.</span></div>
+    <a class="btn-dark" href="#ogorod">Посчитать <span aria-hidden="true">→</span></a>
+  </div>
+
+  <p class="source" id="demoNote" hidden><b>Откуда данные.</b> Пшеница, Казахстан в целом, 2000–2025. Урожай за 2000–2024 годы — FAOSTAT (ООН), за 2025 год — предварительные итоги Бюро национальной статистики РК (15,8 ц/га). Погода — NASA POWER, среднее по трём точкам зернового пояса: Костанайская, Северо-Казахстанская и Акмолинская области. Официальных итогов урожая 2026 года ещё нет.</p>
+
+  <details class="expert" id="specialist">
+    <summary>Подробности для специалистов</summary>
+    <div class="expert-body">
+
+  <section class="block">
+    <h2>Выбранный метод</h2>
+    <div class="fc" id="fc"></div>
+  </section>
+
+  <section class="block">
+    <h2>Вероятности: байесовская модель</h2>
+    <p class="hint">Байесовская регрессия даёт не одно число, а распределение возможной урожайности. Из него видно, насколько вероятен недобор ниже выбранного порога и в каких пределах урожайность окажется с заданной вероятностью.</p>
+    <div class="top">
+      <div class="fc">
+        <div class="bayes-ctl">
+          <label class="f" for="thr">Порог недобора<input id="thr" inputmode="decimal"></label>
+          <label class="f" for="prior">Априорные ожидания
+            <select id="prior"><option value="agro">Осадки помогают, жара вредит</option><option value="neutral">Нейтральные</option></select>
+          </label>
+        </div>
+        <hr>
+        <div id="bstats"></div>
+      </div>
+      <figure class="chart">
+        <div class="legend">
+          <span><i class="below"></i>Вероятность ниже порога</span>
+          <span><i class="ci"></i>80% интервал</span>
+        </div>
+        <div id="dens"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="block">
+      <h2>Какой метод точнее</h2>
+      <p class="hint">Каждый год прогнозируется только по предыдущим годам, как в реальном сезоне. MAE — средняя ошибка, RMSE сильнее штрафует крупные промахи. Выигрыш показывает, насколько метод точнее простого тренда.</p>
+      <div class="scroll"><table id="methods"></table></div>
+    </div>
+    <div class="block">
+      <h2>Проверка по годам</h2>
+      <p class="hint">Общий выигрыш может скрывать провальные сезоны, поэтому ошибки показаны по каждому году.</p>
+      <div class="scroll yearscroll"><table id="years"></table></div>
+    </div>
+  </section>
+
+  <section class="how">
+    <h2>Как считается</h2>
+    <ul>
+      <li><b>Среднее за 5 лет</b> и <b>среднее за все годы</b> — простые ориентиры. Сложный метод имеет смысл, только если обыгрывает их.</li>
+      <li><b>Линейный тренд</b> учитывает рост урожайности за счёт сортов и технологий.</li>
+      <li><b>Тренд + погода</b> — гребневая регрессия на год, осадки за май–июль и градусо-дни выше 30 °C за июнь–август (сумма превышений дневного максимума над 30 °C). Градусо-дни учитывают и число жарких дней, и силу жары. Подходит для малых выборок, где деревья решений не обучаются.</li>
+      <li><b>Байесовская регрессия</b> — та же линейная модель, но коэффициенты и разброс считаются случайными величинами. Априорное распределение (нормальное — обратное гамма) задаёт ожидания до данных, данные его уточняют. Прогноз получается распределением Стьюдента, из него берутся интервалы и вероятность недобора. Точность интервалов проверяется: в 80% интервал факт должен попадать примерно в 80% прошлых лет.</li>
+      <li>Проверка: для каждого года модель обучается только на предыдущих (расширяющееся окно). Год прогноза не участвует в обучении.</li>
+      <li>Диапазон строится по ошибкам выбранного метода на прошлых годах (10-й и 90-й процентили), у байесовской модели — по её распределению. При малом числе лет он приблизительный.</li>
+    </ul>
+  </section>
+    </div>
+  </details>
+
+  <details class="expert" id="dannye">
+    <summary>Изменить данные или загрузить свои</summary>
+    <div class="expert-body">
+  <section class="data">
+    <div class="toolbar">
+      <label class="f" for="unit">Единицы урожайности
+        <select id="unit"><option value="t">т/га</option><option value="c">ц/га</option></select>
+      </label>
+      <label class="f" for="minTrain">Минимум лет для обучения
+        <input id="minTrain" type="number" min="3" max="30" style="width:90px">
+      </label>
+      <label class="f" for="method">Метод для прогноза
+        <select id="method"></select>
+      </label>
+      <div class="row">
+        <button id="demoBtn">Загрузить данные FAOSTAT</button>
+        <button id="clearBtn">Очистить данные</button>
+        <button id="copyBtn">Скопировать CSV</button>
+      </div>
+    </div>
+
+    <div class="target">
+      <label class="f" for="t-year">Год прогноза<input id="t-year" inputmode="numeric"></label>
+      <label class="f" for="t-precip">Осадки май–июль, мм<input id="t-precip" inputmode="decimal"></label>
+      <label class="f" for="t-hot">Градусо-дни &gt;30 °C, июнь–август<input id="t-hot" inputmode="decimal"></label>
+      <label class="f" for="area">Площадь, га (для валового сбора)<input id="area" inputmode="decimal" placeholder="необязательно"></label>
+      <p class="msg" style="flex-basis:100%">Погода на год прогноза нужна только методам «Тренд + погода» и «Байесовская регрессия». Если сезон ещё идёт, вводите фактические значения на дату прогноза или ожидаемые.</p>
+    </div>
+
+    <div class="scroll">
+      <table class="dt">
+        <thead><tr><th>Год</th><th>Урожайность</th><th>Осадки май–июль, мм</th><th>Градусо-дни &gt;30 °C, июнь–август</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="row"><button id="addBtn">Добавить год</button><span class="msg">Погоду можно не заполнять: тогда сравниваются только среднее и тренд. Данные сохраняются в этом браузере.</span></div>
+
+    <details class="import">
+      <summary>Импорт из CSV или Excel</summary>
+      <p class="hint">Вставьте таблицу (можно скопировать прямо из Excel) или выберите CSV-файл. Нужны столбцы «год» и «урожайность»; «осадки» и «градусо-дни» (жара) по желанию. Без заголовка столбцы читаются в этом порядке.</p>
+      <textarea id="paste" placeholder="год;урожайность;осадки;градусо_дни&#10;2019;1,014;108;33,0&#10;2020;1,183;144;50,2"></textarea>
+      <div class="row">
+        <input type="file" id="file" accept=".csv,.txt,text/csv">
+        <button class="primary" id="importBtn">Заменить данные</button>
+        <span class="msg" id="importMsg"></span>
+      </div>
+    </details>
+  </section>
+    </div>
+  </details>
+</main>
+</div>
+
+<script>
+const KEY = 'yield-proto-v4';
+const WEATHER = ['precip', 'hot'];
+// Пшеница, Казахстан: урожайность — FAOSTAT (QCL), погода — NASA POWER, среднее по 3 точкам зернового пояса
+// Тепловой стресс (поле hot) — градусо-дни выше 30 °C за июнь–август
+const DEMO_ROWS = [[2000,0.903,132,69.4],[2001,1.180,122,18.3],[2002,1.089,95,13.0],[2003,1.025,157,34.0],[2004,0.843,81,58.5],[2005,0.948,177,29.5],[2006,1.135,120,37.7],[2007,1.298,181,33.6],[2008,0.972,122,68.2],[2009,1.194,140,24.5],[2010,0.734,67,93.4],[2011,1.661,198,12.0],[2012,0.793,155,94.1],[2013,1.076,161,9.9],[2014,1.090,163,44.9],[2015,1.188,179,28.8],[2016,1.211,186,12.7],[2017,1.243,148,12.1],[2018,1.228,203,8.7],[2019,1.014,108,33.0],[2020,1.183,144,50.2],[2021,0.929,97,83.3],[2022,1.273,157,17.4],[2023,0.922,106,91.5],[2024,1.422,242,3.5],[2025,1.580,191,6.6]];
+const demoState = () => ({
+  demo: true, unit: 't', minTrain: '8', method: 'auto', area: '',
+  rows: DEMO_ROWS.map(([year, y, precip, hot]) => ({ year: String(year), y: String(y), precip: String(precip), hot: String(hot) })),
+  target: { year: '2026', precip: '170', hot: '75.7' }
+});
+
+let S = null;
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.rows) && s.target) S = s; } catch (e) {}
+if (!S) S = demoState();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+const $ = id => document.getElementById(id);
+const num = v => (v === '' || v == null) ? NaN : parseFloat(String(v).replace(',', '.').replace(/\s/g, ''));
+const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+const unit = () => S.unit === 'c' ? 'ц/га' : 'т/га';
+const dec = () => S.unit === 'c' ? 1 : 2;
+const fmt = (v, d = dec()) => Number.isFinite(v) ? v.toLocaleString('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- модели ----------
+function trendFit(train) {
+  const mx = mean(train.map(r => r.year)), my = mean(train.map(r => r.y));
+  let sxx = 0, sxy = 0;
+  for (const r of train) { sxx += (r.year - mx) ** 2; sxy += (r.year - mx) * (r.y - my); }
+  const b = sxx > 0 ? sxy / sxx : 0;
+  return r => my + b * (r.year - mx);
+}
+
+function solve(A, b) {
+  const n = b.length, M = A.map((row, i) => [...row, b[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]];
+    const d = M[c][c];
+    if (Math.abs(d) < 1e-12) continue;
+    for (let r = 0; r < n; r++) {
+      if (r === c) continue;
+      const f = M[r][c] / d;
+      for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+    }
+  }
+  return M.map((row, i) => Math.abs(row[i]) < 1e-12 ? 0 : row[n] / row[i]);
+}
+
+// Гребневая регрессия на стандартизованных признаках, свободный член не штрафуется
+function ridgeFit(train, feats, lambda = 1) {
+  const mu = feats.map(f => mean(train.map(r => r[f])));
+  const sd = feats.map((f, j) => { const s = Math.sqrt(mean(train.map(r => (r[f] - mu[j]) ** 2))); return s > 0 ? s : 1; });
+  const ym = mean(train.map(r => r.y));
+  const Z = train.map(r => feats.map((f, j) => (r[f] - mu[j]) / sd[j]));
+  const p = feats.length;
+  const A = Array.from({ length: p }, (_, i) => Array.from({ length: p }, (_, k) => Z.reduce((s, z) => s + z[i] * z[k], 0) + (i === k ? lambda : 0)));
+  const b = Array.from({ length: p }, (_, i) => Z.reduce((s, z, t) => s + z[i] * (train[t].y - ym), 0));
+  const w = solve(A, b);
+  return r => ym + feats.reduce((s, f, j) => s + w[j] * (r[f] - mu[j]) / sd[j], 0);
+}
+
+// ---------- распределение Стьюдента ----------
+function lnGamma(x) {
+  const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+  let y = x, tmp = x + 5.5, ser = 1.000000000190015;
+  tmp -= (x + 0.5) * Math.log(tmp);
+  for (const ci of c) ser += ci / ++y;
+  return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+function betacf(a, b, x) {
+  let c = 1, d = 1 - (a + b) * x / (a + 1);
+  d = 1 / (Math.abs(d) < 1e-30 ? 1e-30 : d);
+  let h = d;
+  for (let m = 1; m <= 200; m++) {
+    const m2 = 2 * m;
+    let aa = m * (b - m) * x / ((a + m2 - 1) * (a + m2));
+    d = 1 + aa * d; d = 1 / (Math.abs(d) < 1e-30 ? 1e-30 : d); c = 1 + aa / c; if (Math.abs(c) < 1e-30) c = 1e-30; h *= d * c;
+    aa = -(a + m) * (a + b + m) * x / ((a + m2) * (a + m2 + 1));
+    d = 1 + aa * d; d = 1 / (Math.abs(d) < 1e-30 ? 1e-30 : d); c = 1 + aa / c; if (Math.abs(c) < 1e-30) c = 1e-30;
+    const del = d * c; h *= del;
+    if (Math.abs(del - 1) < 3e-12) break;
+  }
+  return h;
+}
+function ibeta(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const bt = Math.exp(lnGamma(a + b) - lnGamma(a) - lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b;
+}
+const tCdf = (t, nu) => { const p = 0.5 * ibeta(nu / (nu + t * t), nu / 2, 0.5); return t > 0 ? 1 - p : p; };
+const tPdf = (t, nu) => Math.exp(lnGamma((nu + 1) / 2) - lnGamma(nu / 2) - 0.5 * Math.log(nu * Math.PI) - (nu + 1) / 2 * Math.log(1 + t * t / nu));
+function tQuantile(p, nu) {
+  let lo = -60, hi = 60;
+  for (let i = 0; i < 90; i++) { const mid = (lo + hi) / 2; if (tCdf(mid, nu) < p) lo = mid; else hi = mid; }
+  return (lo + hi) / 2;
+}
+const distQ = (d, p) => d.mean + d.scale * tQuantile(p, d.nu);
+const distCdf = (d, x) => tCdf((x - d.mean) / d.scale, d.nu);
+
+// Байесовская линейная регрессия с сопряжённым нормальным — обратным гамма априорным распределением.
+// Признаки и урожайность стандартизуются по обучающим годам. Априорно: свободный член ~ N(0, 10σ²),
+// наклоны ~ N(m0, σ²), σ² ~ InvGamma(2; 0,5). При агрономических ожиданиях m0 = +0,3 для осадков и −0,3 для жары.
+// Прогноз — распределение Стьюдента с 2aₙ степенями свободы.
+const PRIOR_MEAN = { year: 0, precip: 0.3, hot: -0.3 };
+function invert(A) {
+  const n = A.length;
+  const cols = A.map((_, j) => solve(A, A.map((__, i) => i === j ? 1 : 0)));
+  return Array.from({ length: n }, (_, i) => cols.map(c => c[i]));
+}
+function bayesFit(train, feats, informative) {
+  const n = train.length, ym = mean(train.map(r => r.y));
+  const sy = Math.sqrt(mean(train.map(r => (r.y - ym) ** 2))) || 1;
+  const mu = feats.map(f => mean(train.map(r => r[f])));
+  const sd = feats.map((f, j) => { const s = Math.sqrt(mean(train.map(r => (r[f] - mu[j]) ** 2))); return s > 0 ? s : 1; });
+  const row = r => [1, ...feats.map((f, j) => (r[f] - mu[j]) / sd[j])];
+  const X = train.map(row), y = train.map(r => (r.y - ym) / sy), p = feats.length + 1;
+  const m0 = [0, ...feats.map(f => informative ? (PRIOR_MEAN[f] || 0) : 0)];
+  const v0inv = [0.1, ...feats.map(() => 1)];
+  const A = Array.from({ length: p }, (_, i) => Array.from({ length: p }, (_, k) => X.reduce((s, x) => s + x[i] * x[k], 0) + (i === k ? v0inv[i] : 0)));
+  const rhs = Array.from({ length: p }, (_, i) => v0inv[i] * m0[i] + X.reduce((s, x, t) => s + x[i] * y[t], 0));
+  const Vn = invert(A), mn = solve(A, rhs);
+  const a0 = 2, b0 = 0.5, an = a0 + n / 2;
+  const quad = (v, M) => v.reduce((s, vi, i) => s + vi * M[i].reduce((t, mij, j) => t + mij * v[j], 0), 0);
+  const bn = b0 + 0.5 * (y.reduce((s, v) => s + v * v, 0) + m0.reduce((s, v, i) => s + v * v * v0inv[i], 0) - quad(mn, A));
+  return r => {
+    const x = row(r), loc = x.reduce((s, xi, i) => s + xi * mn[i], 0);
+    const s2 = Math.max(bn, 1e-9) / an * (1 + quad(x, Vn));
+    return { mean: ym + sy * loc, scale: sy * Math.sqrt(s2), nu: 2 * an };
+  };
+}
+
+function methodsFor(cols) {
+  const m = [
+    { key: 'mean5', label: 'Среднее за 5 лет', fit: t => { const v = mean(t.slice(-5).map(r => r.y)); return () => v; } },
+    { key: 'mean', label: 'Среднее за все годы', fit: t => { const v = mean(t.map(r => r.y)); return () => v; } },
+    { key: 'trend', label: 'Линейный тренд', fit: trendFit },
+  ];
+  if (cols.length) m.push({ key: 'reg', label: 'Тренд + погода', needsWeather: true, fit: t => ridgeFit(t, ['year', ...cols]) });
+  m.push({ key: 'bayes', label: cols.length ? 'Байесовская регрессия' : 'Байесовский тренд', needsWeather: cols.length > 0, fit: t => {
+    const g = bayesFit(t, ['year', ...cols], S.prior !== 'neutral');
+    const f = r => g(r).mean; f.dist = g; return f;
+  } });
+  return m;
+}
+
+function quantile(a, q) {
+  const s = [...a].sort((x, y) => x - y), pos = (s.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+  return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+}
+
+function compute() {
+  const rows = [];
+  for (const r of S.rows) {
+    const year = num(r.year), y = num(r.y);
+    if (!Number.isFinite(year) || !Number.isFinite(y)) continue;
+    rows.push({ year: Math.round(year), y, precip: num(r.precip), hot: num(r.hot) });
+  }
+  rows.sort((a, b) => a.year - b.year);
+  const issues = [];
+  if (rows.some((r, i) => i && r.year === rows[i - 1].year)) issues.push('Есть повторяющиеся годы. Оставьте по одной строке на год.');
+  let minTrain = Math.round(num(S.minTrain));
+  if (!Number.isFinite(minTrain) || minTrain < 3) minTrain = 3;
+  if (rows.length <= minTrain) issues.push(`Для проверки нужно больше ${minTrain} лет с урожайностью, сейчас ${rows.length}. Добавьте годы или уменьшите минимум лет для обучения.`);
+  const cols = WEATHER.filter(k => rows.length && rows.every(r => Number.isFinite(r[k])));
+  const methods = methodsFor(cols);
+  if (issues.length) return { rows, issues, methods, cols };
+
+  const bt = [];
+  for (let i = minTrain; i < rows.length; i++) {
+    const train = rows.slice(0, i), test = rows[i], p = {};
+    let dist = null;
+    for (const m of methods) { const f = m.fit(train); p[m.key] = f(test); if (f.dist) dist = f.dist(test); }
+    bt.push({ year: test.year, actual: test.y, p, dist });
+  }
+  const cover80 = bt.filter(b => b.dist && b.actual >= distQ(b.dist, 0.1) && b.actual <= distQ(b.dist, 0.9)).length;
+  const stats = methods.map(m => {
+    const e = bt.map(b => b.actual - b.p[m.key]);
+    return { key: m.key, label: m.label, errs: e, mae: mean(e.map(Math.abs)), rmse: Math.sqrt(mean(e.map(x => x * x))) };
+  });
+  const trendMae = stats.find(s => s.key === 'trend').mae;
+  for (const s of stats) {
+    s.skill = trendMae > 0 ? 1 - s.mae / trendMae : NaN;
+    s.worse = bt.filter(b => Math.abs(b.actual - b.p[s.key]) > Math.abs(b.actual - b.p.trend) + 1e-9).length;
+  }
+
+  const last = rows[rows.length - 1].year;
+  const ty = Math.round(num(S.target.year));
+  const tgt = { year: ty };
+  for (const k of cols) tgt[k] = num(S.target[k]);
+  const fcIssues = [];
+  if (!Number.isFinite(ty) || ty <= last) fcIssues.push(`Год прогноза должен быть позже последнего года в данных (${last}).`);
+  const missingWeather = cols.filter(k => !Number.isFinite(tgt[k]));
+  const fcv = {};
+  let fcDist = null;
+  for (const m of methods) {
+    if (fcIssues.length || (m.needsWeather && missingWeather.length)) { fcv[m.key] = null; continue; }
+    const f = m.fit(rows);
+    fcv[m.key] = f(tgt);
+    if (f.dist) fcDist = f.dist(tgt);
+  }
+
+  const ranked = [...stats].sort((a, b) => a.mae - b.mae);
+  const best = ranked[0];
+  let chosen = S.method !== 'auto' ? stats.find(s => s.key === S.method) : null;
+  let note = '';
+  if (!chosen) {
+    chosen = ranked.find(s => fcv[s.key] != null) || best;
+    if (chosen !== best && !fcIssues.length) note = `Самый точный метод — «${best.label}», но для него не введена погода на ${ty} год. Показан следующий по точности.`;
+  } else if (fcv[chosen.key] == null && !fcIssues.length) {
+    note = `Для метода «${chosen.label}» введите погоду на ${ty} год.`;
+  }
+  let interval = null;
+  if (chosen.key === 'bayes' && fcDist) {
+    interval = [distQ(fcDist, 0.1), distQ(fcDist, 0.9)];
+  } else if (fcv[chosen.key] != null && chosen.errs.length >= 5) {
+    interval = [fcv[chosen.key] + quantile(chosen.errs, 0.1), fcv[chosen.key] + quantile(chosen.errs, 0.9)];
+  }
+  return { rows, issues: fcIssues, methods, cols, bt, stats, best, chosen, fcv, ty, interval, note, missingWeather, fcDist, cover80 };
+}
+
+// ---------- график ----------
+function niceStep(raw) {
+  const p = 10 ** Math.floor(Math.log10(raw)), n = raw / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+function stepDec(step) { let d = 0; while (d < 4 && Math.abs(Math.round(step * 10 ** d) - step * 10 ** d) > 1e-9) d++; return d; }
+
+function drawChart(R) {
+  const box = $('chart');
+  if (!R.rows.length) { box.innerHTML = '<p class="msg">Нет данных для графика.</p>'; return; }
+  const W = Math.max(300, box.clientWidth || 640), H = W < 520 ? 240 : 290;
+  const L = 46, Rp = 20, T = 16, B = 28;
+  const key = R.chosen && R.chosen.key, fv = R.fcv && key ? R.fcv[key] : null;
+  const xs = R.rows.map(r => r.year); if (fv != null) xs.push(R.ty);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  let vals = R.rows.map(r => r.y);
+  if (key && R.bt) vals = vals.concat(R.bt.map(b => b.p[key]));
+  if (fv != null) { vals.push(fv); if (R.interval) vals.push(...R.interval); }
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.08 || Math.abs(hi) * 0.1 || 0.1; lo -= pad; hi += pad;
+  const step = niceStep((hi - lo) / 5); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const sx = x => L + (x1 === x0 ? 0.5 : (x - x0) / (x1 - x0)) * (W - L - Rp);
+  const sy = v => H - B - (v - lo) / (hi - lo) * (H - T - B);
+  const d = stepDec(step);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Урожайность по годам и прогноз">`;
+  for (let i = 0; lo + i * step <= hi + step / 2; i++) {
+    const v = lo + i * step, y = sy(v);
+    s += `<line class="grid" x1="${L}" x2="${W - Rp}" y1="${y}" y2="${y}"/><text class="ax" x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt(v, d)}</text>`;
+  }
+  const span = x1 - x0, minGap = W < 520 ? 52 : 44;
+  let xstep = [1, 2, 5, 10, 20].find(k => (W - L - Rp) / (span / k || 1) >= minGap) || 20;
+  for (let x = Math.ceil(x0 / xstep) * xstep; x <= x1; x += xstep) s += `<text class="ax" x="${sx(x)}" y="${H - 8}" text-anchor="middle">${x}</text>`;
+  const floor = H - B;
+  s += `<defs><linearGradient id="actFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--leaf-2);stop-opacity:.3"/><stop offset="1" style="stop-color:var(--leaf-2);stop-opacity:0"/></linearGradient></defs>`;
+  s += `<path fill="url(#actFill)" d="M${sx(R.rows[0].year)},${floor} ${R.rows.map(r => `L${sx(r.year)},${sy(r.y)}`).join(' ')} L${sx(R.rows[R.rows.length - 1].year)},${floor} Z"/>`;
+  if (key && R.bt && R.bt.length) s += `<polyline class="bt" points="${R.bt.map(b => sx(b.year) + ',' + sy(b.p[key])).join(' ')}"/>`;
+  s += `<polyline class="act" points="${R.rows.map(r => sx(r.year) + ',' + sy(r.y)).join(' ')}"/>`;
+  for (const r of R.rows) s += `<circle class="actdot" cx="${sx(r.year)}" cy="${sy(r.y)}" r="3.2"><title>${r.year}: ${fmt(r.y)} ${unit()}</title></circle>`;
+  if (fv != null) {
+    const lr = R.rows[R.rows.length - 1], fx = sx(R.ty), fy = sy(fv);
+    s += `<line class="link" x1="${sx(lr.year)}" y1="${sy(lr.y)}" x2="${fx}" y2="${fy}"/>`;
+    if (R.interval) s += `<rect class="band" x="${fx - 7}" width="14" y="${sy(R.interval[1])}" height="${Math.max(2, sy(R.interval[0]) - sy(R.interval[1]))}" rx="3"/>`;
+    s += `<circle class="fcdot" cx="${fx}" cy="${fy}" r="6"><title>Прогноз ${R.ty}: ${fmt(fv)} ${unit()}</title></circle>`;
+    s += `<text class="fclab" x="${fx - 12}" y="${fy - 12}" text-anchor="end">${fmt(fv)}</text>`;
+  }
+  box.innerHTML = s + '</svg>';
+}
+
+// ---------- вывод ----------
+let lastR = null;
+function render() {
+  const R = compute(); lastR = R;
+  $('demoNote').hidden = !S.demo;
+  $('issues').innerHTML = R.issues.map(esc).join('<br>');
+
+  const sel = $('method');
+  const opts = [['auto', 'Авто: самый точный'], ...R.methods.map(m => [m.key, m.label])];
+  if (!opts.some(o => o[0] === S.method)) S.method = 'auto';
+  sel.innerHTML = opts.map(([v, l]) => `<option value="${v}"${v === S.method ? ' selected' : ''}>${esc(l)}</option>`).join('');
+
+  const fc = $('fc');
+  if (!R.stats) {
+    fc.innerHTML = '<div class="fc-year">Прогноз</div><p class="msg">Недостаточно данных. Нужна урожайность хотя бы за несколько лет подряд.</p>';
+    $('methods').innerHTML = ''; $('years').innerHTML = '';
+    drawChart(R); renderBayes(R); renderVerdict(R); return;
+  }
+  const v = R.fcv[R.chosen.key];
+  const other = S.unit === 'c' ? ['т/га', x => x / 10, 2] : ['ц/га', x => x * 10, 1];
+  const area = num(S.area);
+  const toT = x => S.unit === 'c' ? x / 10 : x;
+  let h = `<div class="fc-year">Прогноз на ${Number.isFinite(R.ty) ? R.ty : '—'} год</div>`;
+  if (v != null) {
+    h += `<div class="fc-num">${fmt(v)}<small>${unit()}</small></div>`;
+    h += `<div class="fc-meta">≈ ${fmt(other[1](v), other[2])} ${other[0]}</div>`;
+    h += R.interval
+      ? `<div class="fc-range">80% диапазон: <b>${fmt(R.interval[0])} – ${fmt(R.interval[1])}</b> ${unit()}</div>`
+      : `<div class="fc-meta">Диапазон появится, когда будет хотя бы 5 проверочных лет.</div>`;
+    if (Number.isFinite(area) && area > 0) {
+      const g = x => Math.round(toT(x) * area).toLocaleString('ru-RU');
+      h += `<hr><div><div class="fc-meta">Валовой сбор с ${area.toLocaleString('ru-RU')} га</div><div class="fc-range"><b>${g(v)} т</b>${R.interval ? ` (${g(R.interval[0])} – ${g(R.interval[1])} т)` : ''}</div></div>`;
+    }
+  } else {
+    h += `<p class="msg">Прогноз не построен.</p>`;
+  }
+  h += `<hr><div><span class="chip">${esc(R.chosen.label)}</span></div>`;
+  const sk = R.chosen.skill;
+  h += `<div class="fc-meta">Средняя ошибка на прошлых годах: ${fmt(R.chosen.mae)} ${unit()}` +
+       (R.chosen.key !== 'trend' && Number.isFinite(sk) ? `; ${sk >= 0 ? 'точнее' : 'хуже'} тренда на ${Math.abs(sk * 100).toFixed(0)}%` : '') + '.</div>';
+  if (R.note) h += `<div class="fc-meta">${esc(R.note)}</div>`;
+  fc.innerHTML = h;
+
+  let m = `<thead><tr><th>Метод</th><th class="n">MAE</th><th class="n">RMSE</th><th class="n">Выигрыш</th><th class="n">Хуже тренда</th><th class="n">Прогноз ${Number.isFinite(R.ty) ? R.ty : ''}</th></tr></thead><tbody>`;
+  for (const s of R.stats) {
+    const isBest = s === R.best;
+    const pct = Math.round(s.skill * 100);
+    const skill = s.key === 'trend' ? '—' : `<span class="${pct >= 0 ? 'pos' : 'neg'}">${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct)}%</span>`;
+    const worse = s.key === 'trend' ? '—' : `${s.worse} из ${R.bt.length}`;
+    m += `<tr class="${isBest ? 'best' : ''}"><td>${esc(s.label)}${isBest ? ' <span class="chip">лучший</span>' : ''}</td><td class="n">${fmt(s.mae)}</td><td class="n">${fmt(s.rmse)}</td><td class="n">${skill}</td><td class="n">${worse}</td><td class="n">${R.fcv[s.key] == null ? '—' : fmt(R.fcv[s.key])}</td></tr>`;
+  }
+  m += `</tbody>`;
+  $('methods').innerHTML = m + `<caption style="caption-side:bottom;text-align:left;padding-top:8px" class="msg">Ошибки в ${unit()}, проверено на ${R.bt.length} годах (${R.bt[0].year}–${R.bt[R.bt.length - 1].year}).${R.cols.length ? '' : ' Погода заполнена не за все годы, поэтому «Тренд + погода» не участвует.'}</caption>`;
+
+  const ck = R.chosen.key, showTrend = ck !== 'trend';
+  let y = `<thead><tr><th>Год</th><th class="n">Факт</th>${showTrend ? '<th class="n">Тренд</th>' : ''}<th class="n">${esc(R.chosen.label)}</th><th class="n">Ошибка</th></tr></thead><tbody>`;
+  for (const b of [...R.bt].reverse()) {
+    const e = b.actual - b.p[ck], et = b.actual - b.p.trend;
+    const worse = showTrend && Math.abs(e) > Math.abs(et) + 1e-9;
+    y += `<tr><td>${b.year}</td><td class="n">${fmt(b.actual)}</td>${showTrend ? `<td class="n">${fmt(b.p.trend)}</td>` : ''}<td class="n">${fmt(b.p[ck])}</td><td class="n ${worse ? 'neg' : ''}">${e >= 0 ? '+' : '−'}${fmt(Math.abs(e))}</td></tr>`;
+  }
+  $('years').innerHTML = y + '</tbody>' + (showTrend ? `<caption style="caption-side:bottom;text-align:left;padding-top:8px" class="msg">Красным отмечены годы, где метод ошибся сильнее тренда. Ошибка = факт − прогноз.</caption>` : '');
+  drawChart(R);
+  renderBayes(R);
+  renderVerdict(R);
+}
+
+// ---------- байесовский блок ----------
+// «Обычный урожай» — среднее за последние 10 лет
+const usual = R => mean(R.rows.slice(-10).map(r => r.y));
+function threshold(R) {
+  const t = num(S.threshold);
+  return Number.isFinite(t) ? t : usual(R);
+}
+
+// ---------- главный вывод простыми словами ----------
+const toC = v => S.unit === 'c' ? v : v * 10;
+const fc1 = v => fmt(toC(v), 1);
+const share = (arr, v) => arr.filter(x => x < v).length / arr.length;
+const inYears = n => n === 1 ? 'году' : 'годах';
+const ruPlural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
+const chances = n => ruPlural(n, 'шанс', 'шанса', 'шансов');
+const bagWord = n => ruPlural(n, 'мешок', 'мешка', 'мешков');
+
+const ICON = {
+  sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
+  drop: '<svg viewBox="0 0 24 24"><path d="M12 3c3.5 4.5 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6.5 6-11z"/></svg>',
+  sprout: '<svg viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4 3-7 8-7 0 5-3 7-8 7zM12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 5.5 7 5.5z"/></svg>',
+  house: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7M5 10v10h14V10M10 20v-5h4v5"/></svg>',
+};
+
+// Декоративные иллюстрации карточек: растение в горшке, ветка, лейка
+const ART = {
+  plant: `<svg class="art" viewBox="0 0 128 128" aria-hidden="true">
+    <path class="st" d="M64 80C63 62 60 48 52 34M64 80c2-16 8-30 18-40M64 80c-6-10-16-16-28-18M64 80c6-8 16-12 28-12"/>
+    <ellipse class="l1" cx="50" cy="28" rx="7" ry="17" transform="rotate(-25 50 28)"/>
+    <ellipse class="l2" cx="86" cy="34" rx="7" ry="17" transform="rotate(38 86 34)"/>
+    <ellipse class="l2" cx="32" cy="58" rx="7" ry="17" transform="rotate(-70 32 58)"/>
+    <ellipse class="l3" cx="96" cy="64" rx="6" ry="15" transform="rotate(80 96 64)"/>
+    <ellipse class="l1" cx="68" cy="46" rx="6" ry="14" transform="rotate(12 68 46)"/>
+    <ellipse class="l3" cx="44" cy="46" rx="5" ry="12" transform="rotate(-48 44 46)"/>
+    <rect class="pot" x="40" y="78" width="48" height="9" rx="3"/>
+    <path class="pot" d="M44 87h40l-5 30H49z"/></svg>`,
+  branch: `<svg class="art" viewBox="0 0 128 128" aria-hidden="true">
+    <path class="st" d="M24 116C44 92 70 58 104 18"/>
+    <ellipse class="l2" cx="44" cy="80" rx="6" ry="15" transform="rotate(-20 44 80)"/>
+    <ellipse class="l1" cx="66" cy="88" rx="6" ry="15" transform="rotate(70 66 88)"/>
+    <ellipse class="l3" cx="62" cy="54" rx="6" ry="15" transform="rotate(-15 62 54)"/>
+    <ellipse class="l2" cx="86" cy="62" rx="6" ry="15" transform="rotate(70 86 62)"/>
+    <ellipse class="l1" cx="82" cy="30" rx="5" ry="13" transform="rotate(-10 82 30)"/>
+    <ellipse class="l3" cx="102" cy="38" rx="5" ry="12" transform="rotate(68 102 38)"/></svg>`,
+  can: `<svg class="art" viewBox="0 0 128 128" aria-hidden="true">
+    <path class="can" d="M34 56h46l-4 50H38z"/>
+    <path class="can" d="M80 66l28-22 4 5-26 26"/>
+    <path class="st" d="M40 56c0-16 34-16 34 0"/>
+    <path class="drop" d="M110 60c3 4 4 6 4 8a4 4 0 0 1-8 0c0-2 1-4 4-8zM100 76c3 4 4 6 4 8a4 4 0 0 1-8 0c0-2 1-4 4-8zM114 82c2 3 3 5 3 6a3 3 0 0 1-6 0c0-1 1-3 3-6z"/>
+    <path class="st" d="M20 112c10-6 20-6 30 0s20 6 30 0 20-6 30 0"/>
+    <ellipse class="l2" cx="26" cy="98" rx="4" ry="10" transform="rotate(-20 26 98)"/>
+    <ellipse class="l3" cx="18" cy="104" rx="3" ry="8" transform="rotate(-60 18 104)"/></svg>`,
+};
+
+// Ряд мешков: сколько соберут по сравнению с обычными 10
+function bagsRow(n) {
+  const total = Math.min(15, Math.max(10, n));
+  let s = `<div class="bags" role="img" aria-label="${n} ${bagWord(n)} вместо обычных 10">`;
+  for (let i = 0; i < total; i++) {
+    const cls = i < Math.min(n, 10) ? 'full' : i < 10 ? 'empty' : 'extra';
+    s += `<svg class="bag ${cls}" viewBox="0 0 24 28" aria-hidden="true"><path d="M8.5 3h7l-1.8 4.2C18 9.5 21 14 21 19c0 4-3.6 6.5-9 6.5S3 23 3 19c0-5 3-9.5 7.3-11.8z"/><path class="tie" d="M9.5 7.4h5"/></svg>`;
+  }
+  return s + `</div><div class="bags-cap"><span><i class="full"></i>соберут</span>${n < 10 ? '<span><i class="empty"></i>недобор</span>' : ''}${n > 10 ? '<span><i class="extra"></i>сверх обычного</span>' : ''}</div>`;
+}
+
+function gardenTips(heat, rain) {
+  if (heat === 'hot') return 'Жаркое лето тяжело и для огорода. Поливайте рано утром или вечером, а не днём. Укрывайте землю у растений скошенной травой или соломой: так влага держится дольше. Огурцам, капусте и зелени в сильную жару помогает лёгкая тень.';
+  if (rain === 'dry') return 'В сухое лето поливайте реже, но обильно, чтобы вода доходила до корней. После полива рыхлите землю или укрывайте её травой, чтобы она не пересыхала.';
+  if (rain === 'wet') return 'В дождливое лето томаты и картофель чаще болеют фитофторой. Не сажайте растения слишком густо, проветривайте теплицу и убирайте больные листья.';
+  if (heat || rain) return 'Погода сезона была спокойной, обычного ухода за огородом достаточно.';
+  return '';
+}
+
+function renderVerdict(R) {
+  const box = $('verdict');
+  gAuto = seasonCats(R);
+  renderGarden();
+  $('chartUnit').textContent = R.rows.length ? `Шкала графика — ${unit()}${S.unit === 't' ? ' (1 т/га = 10 ц/га)' : ''}. Наведите на точку, чтобы увидеть значение.` : '';
+  const v = R.stats && R.fcv ? R.fcv[R.chosen.key] : null;
+  $('seasonChip').textContent = Number.isFinite(R.ty) ? `Сезон ${R.ty}` : 'Сезон';
+  if (v == null) {
+    box.innerHTML = `<div class="card c-main"><div class="c-text"><div class="lbl">Прогноз урожая</div><div class="v-big">Прогноз пока не построен</div><p class="v-lead">${R.stats
+      ? 'Укажите год прогноза и погоду этого сезона в разделе «Данные».'
+      : 'Нужен урожай хотя бы за 9–10 прошлых лет. Добавьте его в разделе «Данные».'}</p></div>${ART.plant}</div>`;
+    return;
+  }
+  const base = usual(R), last = R.rows[R.rows.length - 1];
+  const diff = Math.round((v / base - 1) * 100);
+  const lvl = diff <= -15 ? ['bad', 'Заметно хуже обычного'] : diff <= -5 ? ['bad', 'Немного хуже обычного']
+    : diff < 5 ? ['mid', 'Как в обычный год'] : diff < 15 ? ['good', 'Немного лучше обычного'] : ['good', 'Заметно лучше обычного'];
+  const crop = S.demo ? 'Пшеница · Казахстан' : 'Ваш урожай';
+  const bags = Math.round(10 * v / base);
+  let h = `<div class="card c-main"><div class="c-text"><div class="lbl">Прогноз урожая · ${esc(crop)}</div>
+    <div class="v-big">${lvl[1]}</div>
+    <span class="v-status"><span class="v-dot ${lvl[0]}" aria-hidden="true"></span>${diff === 0 ? 'Как в среднем за 10 лет' : `${diff < 0 ? 'Меньше' : 'Больше'} обычного на ${Math.abs(diff)}%`}</span>
+    <p class="v-lead">${bags === 10
+      ? 'Если в обычный год с поля собирают <b>10 мешков</b> зерна, то в этом году соберут примерно столько же.'
+      : `Если в обычный год с поля собирают <b>10 мешков</b> зерна, то в этом году соберут около <b>${bags}</b>.`}</p>
+    ${bagsRow(bags)}</div>${ART.plant}</div>`;
+  if (R.fcDist) {
+    const p = distCdf(R.fcDist, base), n = Math.max(0, Math.min(10, Math.round(p * 10)));
+    h += `<div class="card c-chance"><div class="c-text"><div class="lbl">Риск неурожая</div>
+      <div class="v-num">${n === 0 ? '&lt;1' : n}<small>из 10</small></div>
+      <p class="c-sub">${n === 0 ? 'Меньше 1 шанса' : `${n} ${chances(n)}`} из 10, что урожай окажется меньше обычного.</p></div>${ART.branch}</div>`;
+  }
+
+  // Почему так: погода сезона по сравнению с прошлыми годами
+  const cards = [], tg = { precip: num(S.target.precip), hot: num(S.target.hot) };
+  let heatCat = null, rainCat = null;
+  if (R.cols.includes('hot') && Number.isFinite(tg.hot)) {
+    const arr = R.rows.map(r => r.hot), s = share(arr, tg.hot), hotter = arr.filter(x => x > tg.hot).length;
+    if (hotter === 0) { heatCat = 'hot'; cards.push(['bad', ICON.sun, 'Жара', `Самое жаркое лето за ${arr.length} лет`, 'Сильная жара сушит колосья, и зерна становится меньше.']); }
+    else if (s >= 0.7) { heatCat = 'hot'; cards.push(['bad', ICON.sun, 'Жара', 'Очень жаркое лето', `Жарче было только в ${hotter} ${inYears(hotter)} из ${arr.length}. Жара сушит колосья.`]); }
+    else if (s <= 0.3) { heatCat = 'mild'; cards.push(['good', ICON.sun, 'Жара', 'Лето без сильной жары', 'Растениям было комфортно.']); }
+    else { heatCat = 'normal'; cards.push(['mid', ICON.sun, 'Жара', 'Обычное лето', 'Жары было не больше, чем всегда.']); }
+  }
+  if (R.cols.includes('precip') && Number.isFinite(tg.precip)) {
+    const s = share(R.rows.map(r => r.precip), tg.precip);
+    if (s >= 0.7) { rainCat = 'wet'; cards.push(['good', ICON.drop, 'Дожди', 'Дождливо', 'Воды растениям хватало.']); }
+    else if (s <= 0.3) { rainCat = 'dry'; cards.push(['bad', ICON.drop, 'Дожди', 'Засуха', 'Дождей было мало, растениям не хватало воды.']); }
+    else { rainCat = 'normal'; cards.push(['mid', ICON.drop, 'Дожди', 'Как обычно', 'Дождей было примерно столько же, сколько всегда.']); }
+  }
+  const tr = trendFit(R.rows), per10 = toC(tr({ year: 10 }) - tr({ year: 0 }));
+  if (per10 > 0.2) cards.push(['good', ICON.sprout, 'Сорта и техника', 'Урожаи растут', 'С каждым годом урожаи понемногу растут, и это немного выручает.']);
+  const mark = { bad: '−', good: '+', mid: '≈' };
+  if (cards.length) h += `<div class="card c-weather"><div class="lbl">Почему так: погода этого лета</div><div class="w-items">${cards.map(([c, icon, t, b, s]) =>
+    `<div class="w-item"><span class="w-ic" aria-hidden="true">${icon}<i class="${c}">${mark[c]}</i></span><div><div class="w-t">${t}</div><b>${b}</b><p>${s}</p></div></div>`).join('')}</div></div>`;
+
+  const errPct = Math.round(R.chosen.mae / mean(R.rows.map(r => r.y)) * 100), k = Math.max(1, Math.round(errPct / 10));
+  h += `<div class="card c-acc"><div class="lbl">Насколько точно</div><div class="v-num">±${errPct}%</div>
+    <p class="c-sub">Это примерная оценка. В прошлые годы она ошибалась в среднем на ${errPct}%, то есть примерно на ${k} ${bagWord(k)} из 10.</p>
+    <details class="v-exact"><summary>Точные цифры</summary><p>Ожидаемый урожай — ${fc1(v)} ц/га (центнеров с гектара; это ${fmt(toC(v) / 10, 2)} т с гектара)${R.interval
+      ? `, скорее всего от ${fc1(R.interval[0])} до ${fc1(R.interval[1])} ц/га` : ''}. Обычный урожай — ${fc1(base)} ц/га, это среднее за последние 10 лет. В ${last.year} году было ${fc1(last.y)} ц/га.</p></details></div>`;
+
+  const tips = gardenTips(heatCat, rainCat);
+  if (tips) h += `<div class="card c-tip"><div class="c-text"><div class="lbl">Совет для огорода и сада</div><p class="tip-serif">${tips}</p>${S.demo
+    ? '<p class="v-note">Погода — по северу Казахстана. Советы общие и подходят для большинства огородных культур.</p>' : ''}</div>${ART.can}</div>`;
+
+  h += `<p class="v-note">Это расчёт по погоде и урожаям прошлых лет, а не официальные данные.${S.demo
+    ? ' Официальные итоги урожая публикует Бюро национальной статистики Казахстана.' : ''}</p>`;
+  box.innerHTML = h;
+}
+
+function renderBayes(R) {
+  const box = $('bstats');
+  const d = R.fcDist;
+  if (R.rows.length) $('thr').placeholder = fmt(usual(R));
+  if (!R.stats || !d) {
+    box.innerHTML = `<p class="msg">${R.stats && R.missingWeather && R.missingWeather.length ? `Введите погоду на ${R.ty} год, чтобы получить распределение.` : 'Распределение появится, когда хватит данных для прогноза.'}</p>`;
+    $('dens').innerHTML = '';
+    return;
+  }
+  const thr = threshold(R), pBelow = distCdf(d, thr);
+  const thrNote = Number.isFinite(num(S.threshold)) ? '' : ' (средний урожай за 10 лет)';
+  const n = R.bt.filter(b => b.dist).length;
+  box.innerHTML = `
+    <div class="fc-meta">Вероятность, что в ${R.ty} году урожайность будет ниже ${fmt(thr)} ${unit()}${thrNote}</div>
+    <div class="risk">${(pBelow * 100).toFixed(0)}%</div>
+    <dl class="kv">
+      <dt>Ожидаемое значение</dt><dd>${fmt(d.mean)} ${unit()}</dd>
+      <dt>80% интервал</dt><dd>${fmt(distQ(d, 0.1))} – ${fmt(distQ(d, 0.9))}</dd>
+      <dt>95% интервал</dt><dd>${fmt(distQ(d, 0.025))} – ${fmt(distQ(d, 0.975))}</dd>
+      <dt>Выше рекорда (${fmt(Math.max(...R.rows.map(r => r.y)))})</dt><dd>${((1 - distCdf(d, Math.max(...R.rows.map(r => r.y)))) * 100).toFixed(0)}%</dd>
+    </dl>
+    <div class="fc-meta">Проверка интервалов: на прошлых годах факт попал в 80% интервал в ${R.cover80} из ${n} лет (${n ? Math.round(R.cover80 / n * 100) : 0}%, ожидается около 80%).</div>`;
+  drawDensity(d, thr);
+}
+
+function drawDensity(d, thr) {
+  const box = $('dens');
+  const W = Math.max(300, box.clientWidth || 640), H = W < 520 ? 200 : 240;
+  const L = 16, Rp = 16, T = 18, B = 30;
+  const x0 = d.mean - 4 * d.scale, x1 = d.mean + 4 * d.scale;
+  const pdf = x => tPdf((x - d.mean) / d.scale, d.nu) / d.scale;
+  const ymax = pdf(d.mean) * 1.1;
+  const sx = x => L + (x - x0) / (x1 - x0) * (W - L - Rp);
+  const sy = v => H - B - v / ymax * (H - T - B);
+  const N = 160, pts = Array.from({ length: N + 1 }, (_, i) => x0 + (x1 - x0) * i / N);
+  const base = sy(0);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Распределение прогноза урожайности">`;
+  s += `<line class="grid" x1="${L}" x2="${W - Rp}" y1="${base}" y2="${base}"/>`;
+  const step = niceStep((x1 - x0) / (W < 520 ? 4 : 6)), dd = stepDec(step);
+  for (let v = Math.ceil(x0 / step) * step; v <= x1; v += step) s += `<text class="ax" x="${sx(v)}" y="${H - 8}" text-anchor="middle">${fmt(v, dd)}</text>`;
+  s += `<path class="curve" d="M${sx(x0)},${base} ${pts.map(x => `L${sx(x)},${sy(pdf(x))}`).join(' ')} L${sx(x1)},${base} Z"/>`;
+  if (thr > x0) {
+    const xe = Math.min(thr, x1), bp = pts.filter(x => x < xe).concat([xe]);
+    s += `<path class="below" d="M${sx(x0)},${base} ${bp.map(x => `L${sx(x)},${sy(pdf(x))}`).join(' ')} L${sx(xe)},${base} Z"/>`;
+  }
+  const a = distQ(d, 0.1), b = distQ(d, 0.9);
+  s += `<rect class="ci" x="${sx(a)}" y="${base - 6}" width="${sx(b) - sx(a)}" height="6" rx="2"/>`;
+  s += `<line class="mid" x1="${sx(d.mean)}" x2="${sx(d.mean)}" y1="${base}" y2="${sy(pdf(d.mean))}"/>`;
+  if (thr > x0 && thr < x1) {
+    const tx = sx(thr), right = tx < W / 2;
+    s += `<line class="thr" x1="${tx}" x2="${tx}" y1="${T - 4}" y2="${base}"/>`;
+    s += `<text class="thrlab" x="${tx + (right ? 6 : -6)}" y="${T + 8}" text-anchor="${right ? 'start' : 'end'}">порог ${fmt(thr)}</text>`;
+  }
+  box.innerHTML = s + '</svg>';
+}
+
+// ---------- калькулятор огорода ----------
+// Средний урожай с куста, кочана или квадратного метра, кг (справочники огородника); ghPer — в теплице.
+// kind: warm — теплолюбивые, cool — любят прохладу; blight — страдают от фитофторы, rot — от гнили в сырость.
+const CROPS = {
+  tomato: { name: 'Томаты', unit: 'kust', per: 3, ghPer: 5, kind: 'warm', blight: true },
+  cucumber: { name: 'Огурцы', unit: 'kust', per: 3, ghPer: 6, kind: 'warm', rot: true },
+  pepper: { name: 'Перец', unit: 'kust', per: 1.5, ghPer: 2.5, kind: 'warm' },
+  eggplant: { name: 'Баклажаны', unit: 'kust', per: 2, ghPer: 3, kind: 'warm' },
+  zucchini: { name: 'Кабачки', unit: 'kust', per: 5, kind: 'warm', rot: true },
+  potato: { name: 'Картофель', unit: 'kust', per: 0.7, kind: 'cool', blight: true },
+  cabbage: { name: 'Капуста', unit: 'head', per: 3, kind: 'cool' },
+  carrot: { name: 'Морковь', unit: 'm2', per: 4, kind: 'cool' },
+  beet: { name: 'Свёкла', unit: 'm2', per: 4, kind: 'cool' },
+  onion: { name: 'Лук', unit: 'm2', per: 2.5, kind: 'cool', rot: true },
+  garlic: { name: 'Чеснок', unit: 'm2', per: 1.2, kind: 'cool' },
+  strawberry: { name: 'Клубника', unit: 'kust', per: 0.4, kind: 'cool', rot: true },
+};
+const unitWord = (c, n) => c.unit === 'm2' ? 'м² грядки' : c.unit === 'head' ? ruPlural(Math.round(n), 'кочан', 'кочана', 'кочанов') : ruPlural(Math.round(n), 'куст', 'куста', 'кустов');
+const fmtKg = v => v < 10 ? fmt(v, 1) : Math.round(v).toLocaleString('ru-RU');
+
+const GKEY = 'yield-garden-v1';
+const gardenDefault = () => ({ heat: null, rain: null, water: 'regular', rows: [
+  { crop: 'tomato', qty: '10', place: 'open' }, { crop: 'cucumber', qty: '6', place: 'gh' },
+  { crop: 'potato', qty: '60', place: 'open' }, { crop: 'carrot', qty: '3', place: 'open' },
+] });
+let G = null;
+try { const g = JSON.parse(localStorage.getItem(GKEY)); if (g && Array.isArray(g.rows)) G = g; } catch (e) {}
+if (!G) G = gardenDefault();
+const saveG = () => { try { localStorage.setItem(GKEY, JSON.stringify(G)); } catch (e) {} };
+let gAuto = { heat: null, rain: null };
+
+// Погода сезона по сравнению с прошлыми годами — та же логика, что в главном выводе
+function seasonCats(R) {
+  const tg = { precip: num(S.target.precip), hot: num(S.target.hot) }, out = { heat: null, rain: null };
+  if (R.cols.includes('hot') && Number.isFinite(tg.hot)) out.heat = share(R.rows.map(r => r.hot), tg.hot) >= 0.7 ? 'hot' : 'normal';
+  if (R.cols.includes('precip') && Number.isFinite(tg.precip)) {
+    const s = share(R.rows.map(r => r.precip), tg.precip);
+    out.rain = s >= 0.7 ? 'wet' : s <= 0.3 ? 'dry' : 'normal';
+  }
+  return out;
+}
+
+// Простые поправки на погоду: жара сильнее бьёт по холодолюбивым культурам, полив смягчает жару и засуху,
+// сырость вызывает фитофтору и гниль, теплица защищает от холода и дождя, но перегревается в жару
+function gardenCalc(row, heat, rain, water) {
+  const c = CROPS[row.crop], qty = num(row.qty);
+  if (!c || !Number.isFinite(qty) || qty <= 0) return null;
+  const gh = row.place === 'gh' && c.ghPer != null;
+  const normal = qty * (gh ? c.ghPer : c.per);
+  const w = { regular: 1, some: 0.5, none: 0 }[water] ?? 1;
+  let f = 1;
+  const why = [];
+  if (heat === 'hot') { f *= 1 - (c.kind === 'warm' ? 0.12 : 0.28) * (1 - 0.5 * w) * (gh ? 1.3 : 1); why.push('жары'); }
+  if (heat === 'cool') { const l = c.kind === 'warm' ? (gh ? 0.1 : 0.25) : 0.03; f *= 1 - l; if (l > 0.05) why.push('прохладного лета'); }
+  if (rain === 'dry' && !gh && w < 1) { f *= 1 - 0.3 * (1 - w); why.push('засухи'); }
+  if (rain === 'wet' && (c.blight || c.rot)) { f *= 1 - (c.blight ? 0.2 : 0.1) * (gh ? 0.5 : 1); why.push(c.blight ? 'сырости и фитофторы' : 'сырости и гнили'); }
+  const est = normal * f;
+  return { est, lo: est * 0.65, hi: est * 1.35, normal, why };
+}
+
+function renderGardenRows() {
+  const opts = id => Object.entries(CROPS).map(([k, c]) => `<option value="${k}"${k === id ? ' selected' : ''}>${c.name}</option>`).join('');
+  $('g-rows').innerHTML = G.rows.map((r, i) => {
+    const c = CROPS[r.crop] || CROPS.tomato, canGh = c.ghPer != null;
+    return `<div class="g-row">
+      <select id="g${i}-crop" data-gi="${i}" data-gf="crop" aria-label="Что растёт">${opts(r.crop)}</select>
+      <label class="g-qty" for="g${i}-qty"><input id="g${i}-qty" data-gi="${i}" data-gf="qty" inputmode="decimal" value="${esc(r.qty)}" placeholder="сколько"><span id="g${i}-unit"></span></label>
+      <select id="g${i}-place" data-gi="${i}" data-gf="place" aria-label="Где растёт"${canGh ? '' : ' disabled'}><option value="open"${r.place !== 'gh' || !canGh ? ' selected' : ''}>На грядке</option>${canGh ? `<option value="gh"${r.place === 'gh' ? ' selected' : ''}>В теплице</option>` : ''}</select>
+      <div class="g-res" id="g${i}-res"></div>
+      <button class="del" data-gdel="${i}" aria-label="Убрать грядку">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderGarden() {
+  const heat = G.heat || gAuto.heat || 'normal', rain = G.rain || gAuto.rain || 'normal', water = G.water || 'regular';
+  for (const [n, v] of [['heat', heat], ['rain', rain], ['water', water]]) { const el = $(`g-${n}-${v}`); if (el) el.checked = true; }
+  const auto = (!G.heat && gAuto.heat) || (!G.rain && gAuto.rain);
+  $('g-auto').textContent = auto ? `Погоду мы подставили по данным этого лета${S.demo ? ' на севере Казахстана' : ''}. Если у вас было иначе, выберите своё.` : '';
+  let tot = 0, lo = 0, hi = 0, norm = 0, n = 0;
+  G.rows.forEach((r, i) => {
+    const c = CROPS[r.crop], q = num(r.qty), u = $(`g${i}-unit`), box = $(`g${i}-res`);
+    if (u && c) u.textContent = unitWord(c, Number.isFinite(q) ? q : 0);
+    if (!box) return;
+    const res = gardenCalc(r, heat, rain, water);
+    if (!res) { box.innerHTML = '<small>Укажите, сколько посажено</small>'; return; }
+    n++; tot += res.est; lo += res.lo; hi += res.hi; norm += res.normal;
+    const d = Math.round((res.est / res.normal - 1) * 100);
+    box.innerHTML = `<b>≈ ${fmtKg(res.est)} кг</b><small>${d <= -3 ? `меньше обычного на ${-d}% из-за ${res.why.join(' и ')}` : 'как в обычное лето'}</small>`;
+  });
+  const t = $('g-total');
+  if (!n) { t.innerHTML = ''; return; }
+  const d = Math.round((tot / norm - 1) * 100);
+  let h = `<div>Всего можно собрать</div><div class="big">около ${fmtKg(tot)} кг</div>
+    <div>Скорее всего от ${fmtKg(lo)} до ${fmtKg(hi)} кг. ${d <= -3 ? `В обычное лето было бы около ${fmtKg(norm)} кг: погода отнимает примерно ${-d}%.` : 'Это как в обычное лето.'}</div>`;
+  if (water !== 'regular' && (heat === 'hot' || rain === 'dry')) {
+    const withWater = G.rows.reduce((s, r) => { const x = gardenCalc(r, heat, rain, 'regular'); return s + (x ? x.est : 0); }, 0);
+    h += `<div><b>Совет:</b> в такое лето регулярный полив заметно спасает урожай. С ним вышло бы около ${fmtKg(withWater)} кг.</div>`;
+  }
+  t.innerHTML = h;
+}
+
+$('g-rows').addEventListener('input', e => {
+  const t = e.target; if (t.dataset.gf !== 'qty') return;
+  G.rows[+t.dataset.gi].qty = t.value; saveG(); renderGarden();
+});
+$('g-rows').addEventListener('change', e => {
+  const t = e.target, f = t.dataset.gf; if (f !== 'crop' && f !== 'place') return;
+  const r = G.rows[+t.dataset.gi]; r[f] = t.value;
+  if (f === 'crop' && CROPS[t.value].ghPer == null) r.place = 'open';
+  saveG(); renderGardenRows(); renderGarden();
+});
+$('g-rows').addEventListener('click', e => {
+  const i = e.target.dataset.gdel; if (i == null) return;
+  G.rows.splice(+i, 1); saveG(); renderGardenRows(); renderGarden();
+});
+$('g-add').onclick = () => { G.rows.push({ crop: 'tomato', qty: '', place: 'open' }); saveG(); renderGardenRows(); renderGarden(); $(`g${G.rows.length - 1}-qty`).focus(); };
+$('g-reset').onclick = () => { G = gardenDefault(); saveG(); renderGardenRows(); renderGarden(); };
+for (const n of ['heat', 'rain', 'water']) {
+  document.querySelectorAll(`input[name="g-${n}"]`).forEach(el => el.addEventListener('change', () => { G[n] = el.value; saveG(); renderGarden(); }));
+}
+
+// ---------- редактирование ----------
+function renderRows() {
+  $('rows').innerHTML = S.rows.map((r, i) => `<tr>
+    <td><input id="r${i}-year" data-i="${i}" data-f="year" value="${esc(r.year)}" inputmode="numeric" aria-label="Год"></td>
+    <td><input id="r${i}-y" data-i="${i}" data-f="y" value="${esc(r.y)}" inputmode="decimal" aria-label="Урожайность"></td>
+    <td><input id="r${i}-precip" data-i="${i}" data-f="precip" value="${esc(r.precip)}" inputmode="decimal" aria-label="Осадки"></td>
+    <td><input id="r${i}-hot" data-i="${i}" data-f="hot" value="${esc(r.hot)}" inputmode="decimal" aria-label="Градусо-дни выше 30 °C"></td>
+    <td><button class="del" data-del="${i}" aria-label="Удалить строку">✕</button></td></tr>`).join('');
+}
+function syncControls() {
+  $('unit').value = S.unit; $('minTrain').value = S.minTrain; $('area').value = S.area || '';
+  $('t-year').value = S.target.year; $('t-precip').value = S.target.precip; $('t-hot').value = S.target.hot;
+  $('thr').value = S.threshold || ''; $('prior').value = S.prior === 'neutral' ? 'neutral' : 'agro';
+}
+$('thr').oninput = e => { S.threshold = e.target.value; update(); };
+$('prior').onchange = e => { S.prior = e.target.value; update(); };
+const update = () => { save(); render(); };
+
+$('rows').addEventListener('input', e => { const t = e.target; if (!t.dataset.f) return; S.rows[+t.dataset.i][t.dataset.f] = t.value; update(); });
+$('rows').addEventListener('click', e => { const i = e.target.dataset.del; if (i == null) return; S.rows.splice(+i, 1); renderRows(); update(); });
+$('addBtn').onclick = () => {
+  const years = S.rows.map(r => num(r.year)).filter(Number.isFinite);
+  S.rows.push({ year: years.length ? String(Math.max(...years) + 1) : '', y: '', precip: '', hot: '' });
+  renderRows(); update(); $(`r${S.rows.length - 1}-y`).focus();
+};
+$('unit').onchange = e => { S.unit = e.target.value; update(); };
+$('minTrain').oninput = e => { S.minTrain = e.target.value; update(); };
+$('method').onchange = e => { S.method = e.target.value; update(); };
+$('area').oninput = e => { S.area = e.target.value; update(); };
+$('t-year').oninput = e => { S.target.year = e.target.value; update(); };
+$('t-precip').oninput = e => { S.target.precip = e.target.value; update(); };
+$('t-hot').oninput = e => { S.target.hot = e.target.value; update(); };
+$('demoBtn').onclick = () => { S = demoState(); syncControls(); renderRows(); update(); };
+
+let clearArmed = null;
+$('clearBtn').onclick = e => {
+  const b = e.target;
+  if (!clearArmed) {
+    b.textContent = 'Точно очистить?'; b.classList.add('warn');
+    clearArmed = setTimeout(() => { clearArmed = null; b.textContent = 'Очистить данные'; b.classList.remove('warn'); }, 3000);
+    return;
+  }
+  clearTimeout(clearArmed); clearArmed = null; b.textContent = 'Очистить данные'; b.classList.remove('warn');
+  S.rows = [{ year: '', y: '', precip: '', hot: '' }]; S.demo = false; renderRows(); update();
+};
+
+function toCSV() {
+  return ['год;урожайность;осадки_май_июль_мм;градусо_дни_выше_30_июнь_август']
+    .concat(S.rows.filter(r => r.year !== '' || r.y !== '').map(r => [r.year, r.y, r.precip, r.hot].map(v => String(v).replace('.', ',')).join(';')))
+    .join('\n');
+}
+$('copyBtn').onclick = async e => {
+  const b = e.target, text = toCSV();
+  try { await navigator.clipboard.writeText(text); b.textContent = 'Скопировано'; }
+  catch (err) { const t = $('paste'); t.value = text; t.closest('details').open = true; t.select(); b.textContent = 'Выделено ниже, нажмите Ctrl+C'; }
+  setTimeout(() => { b.textContent = 'Скопировать CSV'; }, 2500);
+};
+
+function parseTable(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return { error: 'Таблица пустая.' };
+  const d = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
+  const cells = lines.map(l => l.split(d).map(c => c.trim().replace(/^"|"$/g, '')));
+  let map = { year: 0, y: 1, precip: 2, hot: 3 };
+  if (/[a-zа-яё]/i.test(lines[0])) {
+    const h = cells.shift().map(c => c.toLowerCase());
+    const find = re => h.findIndex(c => re.test(c));
+    map = { year: find(/год|year/), y: find(/урож|yield/), precip: find(/осад|precip|rain/), hot: find(/градус|gdd|жар|hot|heat|30/) };
+    if (map.year < 0 || map.y < 0) return { error: 'В заголовке не найдены столбцы «год» и «урожайность».' };
+  }
+  const get = (c, i) => i >= 0 && c[i] != null ? c[i].replace(',', '.') : '';
+  const all = cells.map(c => ({ year: get(c, map.year), y: get(c, map.y), precip: get(c, map.precip), hot: get(c, map.hot) }))
+    .filter(r => Number.isFinite(num(r.year)));
+  const rows = all.filter(r => Number.isFinite(num(r.y)));
+  if (!rows.length) return { error: 'Не нашлось строк с годом и урожайностью.' };
+  // Строки без урожайности после последнего года — погода для прогноза
+  const last = Math.max(...rows.map(x => num(x.year)));
+  const future = all.filter(r => !Number.isFinite(num(r.y)) && num(r.year) > last).sort((a, b) => num(a.year) - num(b.year));
+  return { rows, future };
+}
+function importText(text) {
+  const r = parseTable(text);
+  if (r.error) { $('importMsg').textContent = r.error; return; }
+  S.rows = r.rows.sort((a, b) => num(a.year) - num(b.year)); S.demo = false;
+  const last = Math.max(...S.rows.map(x => num(x.year)));
+  if (r.future.length) S.target = { year: r.future[0].year, precip: r.future[0].precip, hot: r.future[0].hot };
+  else if (!(num(S.target.year) > last)) S.target.year = String(last + 1);
+  syncControls(); renderRows(); update();
+  $('importMsg').textContent = `Загружено лет: ${S.rows.length}.`;
+}
+$('importBtn').onclick = () => {
+  const f = $('file').files[0];
+  if (f) { const fr = new FileReader(); fr.onload = () => importText(String(fr.result)); fr.readAsText(f); }
+  else importText($('paste').value);
+};
+
+let rz;
+window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (lastR) { drawChart(lastR); renderBayes(lastR); } }, 120); });
+// Боковое меню: подсветка раздела и раскрытие свёрнутых разделов при переходе
+function goTo(id) {
+  const el = document.getElementById(id);
+  if (el && el.tagName === 'DETAILS') el.open = true;
+  document.querySelectorAll('.nav a').forEach(x => x.classList.toggle('on', x.getAttribute('href') === '#' + id));
+}
+document.querySelectorAll('.nav a, .brand, .banner a').forEach(a => a.addEventListener('click', () => goTo(a.getAttribute('href').slice(1))));
+if (typeof location !== 'undefined' && /^#[\w-]+$/.test(location.hash)) goTo(location.hash.slice(1));
+
+syncControls(); renderRows(); renderGardenRows(); render();
+</script>
