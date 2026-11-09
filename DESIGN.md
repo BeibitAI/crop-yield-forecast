@@ -1,44 +1,40 @@
-# Crop Yield Forecast — дизайн-система
+# Crop Yield Forecast — Agricultural Intelligence Platform
 
-Интерфейс построен как сельскохозяйственная аналитическая платформа: постоянная панель управления сверху, асимметричный обзор урожая и самостоятельные рабочие пространства для погоды, калькулятора, истории, специалистов и данных.
+The page is structured as a simple agricultural workspace for growers and specialists. The main view presents the season estimate and regional weather first; the historical chart and garden calculator have full-width work areas. Specialist analysis and data administration remain available on demand.
 
-## Палитра и шрифт
+## Design system
 
-Токены заданы в `:root` файла `yield-forecast.html`.
+All application styles are maintained in `yield-forecast.css`, linked from the source `yield-forecast.html`.
 
-| Токен | Значение | Назначение |
+| Token | Value | Use |
 |---|---|---|
-| `--bg` | `#F5F6F0` | молочный фон страницы |
-| `--surface` | `#FFFFFF` | рабочие поверхности |
-| `--forest` | `#173F32` | основной фирменный цвет и прогноз |
-| `--green` | `#64866B` | природные акценты |
-| `--ink` | `#1B2924` | основной текст |
-| `--muted` | `#65716A` | пояснения и вторичные подписи |
-| `--line` | `#E4E1D8` | границы и разделители |
-| `--sand` | `#D3BD96` | приглушённый тёплый акцент |
-| `--bad` / `--good` | `#B65D43` / `#417557` | смысловые состояния |
+| `--bg` | `#F5F6F0` | Warm workspace background |
+| `--surface` | `#FFFFFF` | Main content surfaces |
+| `--surface-soft` | `#ECEFE7` | Soft neutral areas |
+| `--forest` | `#183F32` | Brand and primary actions |
+| `--forest-light` | `#527B5F` | Secondary accents and chart |
+| `--surface-green` | `#E6EFE5` | Positive and explanatory panels |
+| `--ink` | `#202923` | Main text |
+| `--muted` | `#778178` | Supporting text |
+| `--line` | `#E3E8DF` | Borders and separators |
 
-Основной интерфейс набран Manrope с системными sans-serif запасными шрифтами. IBM Plex Mono используется для числовых осей и технических значений. Шрифтовая иерархия опирается на размеры и контраст, без декоративной гарнитуры.
+Typography uses platform system fonts to avoid an extra font download. Color, spacing, surface, radius, and shadow values are defined centrally as CSS variables. Buttons, fields, focus indicators, error notices, and reduced-motion behavior share the same visual rules.
 
-## Структура интерфейса
+## Page composition
 
-- **Постоянная верхняя панель**: бренд Crop Yield Forecast, горизонтальные ссылки-якоря, выбор города, геолокация и текущий сезон.
-- **Обзор**: выразительный заголовок и пояснение предваряют широкий контрастный прогноз с урожайностью и сравнительной шкалой. Риск и сворачиваемые объяснения факторов собраны в отдельной боковой панели; точность и рекомендация образуют нижнюю строку.
-- **Погода**: компактная панель с текущими условиями и тремя интервалами осадков. Выбор города и геолокация находятся в общей панели приложения.
-- **Калькулятор**: настройки погоды, культуры и объёмы сгруппированы в рабочей области; общий расчёт вынесен в правый результатный блок.
-- **История урожайности**: график занимает главную часть аналитической секции; краткое описание и легенда расположены отдельно.
-- **Объяснения**: термины поданы нумерованным списком, не повторяющим карточный шаблон.
-- **Специалистам**: раскрываемая аналитическая панель с методом, байесовским распределением, метриками и проверкой по годам.
-- **Данные**: параметры прогноза, ввод целевого сезона, историческая таблица и импорт/экспорт CSV разделены по задачам.
+- **Navigation** is a persistent desktop sidebar with brand, season, section links, region selector, and location action. On smaller screens it becomes a compact header with horizontally scrollable section links.
+- **Season overview** uses a two-part grid: the large yield forecast and its risk, factors, and recommendation occupy the main area; current Open-Meteo conditions sit alongside it. At tablet and phone widths, the weather section moves below the forecast.
+- **History** follows as a full-width analytical section. Its chart scales to the container and keeps the measured yield, model estimate, and current forecast visually distinct.
+- **Garden calculator** has a separate full-width form and a dedicated result area. Crop, quantity, growing location, per-bed result, and season settings remain visible and usable.
+- **Plain-language help** and the garden shortcut form a compact supporting section.
+- **Specialist analysis** and **data management** use native disclosure panels so model details, validation tables, editable historical rows, settings, and CSV tools are available without crowding the default view.
 
-## Адаптивность и доступность
+## Tables and responsive behavior
 
-- Верхняя панель становится многострочной на телефоне; навигация прокручивается по горизонтали.
-- Главный прогноз, аналитика, погода и калькулятор перестраиваются в одну колонку на узком экране; таблицы данных прокручиваются внутри своей области.
-- Клавиатурный фокус заметен на ссылках, кнопках, полях и раскрываемых блоках.
-- Статусы имеют текстовые пояснения и не передаются только цветом.
-- Учитывается `prefers-reduced-motion`.
+Tables are sized for their contents rather than forced to share one layout. Method comparisons, per-year validation, and historical records have individual minimum widths and column proportions; long table views scroll inside their own containers. Numeric cells use tabular alignment, descriptions can wrap, and row hover does not alter the table geometry.
 
-## Ограничения интеграции
+Responsive breakpoints are defined at 1100, 820, 600, and 370 px. The desktop sidebar becomes a compact header at tablet size, then the forecast/weather grid and calculator become single-column layouts on phones. The document itself must not scroll horizontally; wide tables may scroll only within their local container.
 
-Сохранены ID, используемые логикой, обработчики, форматы и расчёты; интерфейс продолжает использовать прежнее localStorage, CSV-процесс и Open-Meteo. Источник страницы — `yield-forecast.html`; `index.html` пересобирается командой `node collector/build-site.mjs`.
+## Functional compatibility
+
+The frontend retains its existing IDs, selectors, event handlers, calculation methods, chart rendering, CSV format, localStorage keys, and Open-Meteo request behavior. The page source is `yield-forecast.html`; regenerate `index.html` using `node collector/build-site.mjs`.
