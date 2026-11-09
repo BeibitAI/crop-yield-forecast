@@ -1111,13 +1111,50 @@ fillCities();
 loadWeather();
 
 // Боковое меню: подсветка раздела и раскрытие свёрнутых разделов при переходе
+const navLinks = [...document.querySelectorAll('.nav a')];
+function setActiveNav(id) {
+  navLinks.forEach(link => {
+    const active = link.getAttribute('href') === '#' + id;
+    link.classList.toggle('on', active);
+    if (active) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  });
+}
 function goTo(id) {
   const el = document.getElementById(id);
   if (el && el.tagName === 'DETAILS') el.open = true;
-  document.querySelectorAll('.nav a').forEach(x => x.classList.toggle('on', x.getAttribute('href') === '#' + id));
+  setActiveNav(id);
 }
 document.querySelectorAll('.nav a, .brand, .banner a').forEach(a => a.addEventListener('click', () => goTo(a.getAttribute('href').slice(1))));
 if (typeof location !== 'undefined' && /^#[\w-]+$/.test(location.hash)) goTo(location.hash.slice(1));
+
+let navFrame = 0;
+function updateActiveNavOnScroll() {
+  if (navFrame) return;
+  navFrame = requestAnimationFrame(() => {
+    navFrame = 0;
+    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+    const marker = atBottom ? window.innerHeight : window.innerHeight * 0.32;
+    let activeId = navLinks[0].getAttribute('href').slice(1);
+    let activeTop = -Infinity;
+    for (const link of navLinks) {
+      const section = document.getElementById(link.getAttribute('href').slice(1));
+      if (!section) continue;
+      const top = section.getBoundingClientRect().top;
+      if (top <= marker && top > activeTop) {
+        activeId = section.id;
+        activeTop = top;
+      } else if (top <= marker && top === activeTop && window.scrollY > 0 && location.hash === '#' + section.id) {
+        activeId = section.id;
+      }
+    }
+    setActiveNav(activeId);
+  });
+}
+window.addEventListener('scroll', updateActiveNavOnScroll, { passive: true });
+window.addEventListener('resize', updateActiveNavOnScroll);
+window.addEventListener('hashchange', updateActiveNavOnScroll);
+updateActiveNavOnScroll();
 
 syncControls(); renderRows(); renderGardenRows(); render();
 </script>
