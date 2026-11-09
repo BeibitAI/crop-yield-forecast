@@ -18,21 +18,21 @@ img { max-width: 100%; }
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 :root {
-  --bg: #f5f5ef;
-  --bg-strong: #f0f3eb;
+  --bg: #f5f6f0;
+  --bg-strong: #eff2e9;
   --surface: #ffffff;
   --surface-soft: #f8f4ee;
   --surface-mist: #f1f5ee;
   --surface-panel: rgba(255,255,255,0.7);
-  --ink: #172c26;
-  --muted: #5c6962;
+  --ink: #1b2924;
+  --muted: #65716a;
   --line: #e4e1d8;
   --forest: #173f32;
   --forest-2: #27543d;
   --forest-3: #1d4a3b;
   --green: #64866b;
-  --green-soft: #eaf2ea;
-  --sand: #d9c39a;
+  --green-soft: #eaf1e9;
+  --sand: #d3bd96;
   --sand-soft: #f5ead4;
   --bad: #b65d43;
   --bad-soft: #f8e6df;
@@ -69,99 +69,147 @@ a { color: inherit; }
 button, input, select, textarea { font: inherit; }
 [hidden] { display: none !important; }
 
-.app {
-  display: grid;
-  grid-template-columns: 252px minmax(0, 1fr);
-  min-height: 100vh;
-}
-
-.side {
+.app { min-height: 100vh; }
+.appbar {
   position: sticky;
+  z-index: 30;
   top: 0;
-  height: 100vh;
+  border-bottom: 1px solid rgba(23,63,50,0.1);
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(16px);
+}
+.appbar-top {
+  width: min(1440px, 100%);
+  min-height: 76px;
+  margin: 0 auto;
+  padding: 12px 32px;
   display: flex;
-  flex-direction: column;
-  gap: 28px;
-  padding: 26px 18px 20px;
-  background: linear-gradient(180deg, var(--forest) 0%, var(--forest-3) 100%);
-  color: #edf6ef;
-  box-shadow: inset -1px 0 0 rgba(255,255,255,0.06), 18px 0 40px rgba(14,38,30,0.12);
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.appbar-nav-wrap {
+  border-top: 1px solid #eeefe9;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 6px 8px 12px;
-  color: #edf6ef;
-  text-decoration: none;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  font-size: 1.15rem;
-}
-.brand svg {
-  width: 32px;
-  height: 32px;
+  gap: 10px;
   flex: none;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.035em;
 }
-.brand svg path {
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 37px;
+  height: 37px;
+  border-radius: 9px;
+  background: var(--forest);
+  color: #fff;
+  font: 700 0.78rem var(--mono);
+  letter-spacing: -0.08em;
 }
 .brand span { display: flex; flex-direction: column; gap: 1px; }
-.brand span b { font-size: 1.02rem; line-height: 1.2; }
+.brand span b { font-size: 0.96rem; line-height: 1.2; }
 .brand span small {
-  color: rgba(237,246,239,0.52);
+  color: var(--muted);
   font-size: 0.53rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
-}
-.side-caption {
-  margin: 2px 10px 8px;
-  color: rgba(237,246,239,0.43);
-  font-size: 0.61rem;
-  font-weight: 800;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  letter-spacing: 0.11em;
 }
 
+.app-controls {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.region-control {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 168px;
+}
+.region-control span, .season-control span {
+  color: var(--muted);
+  font-size: 0.59rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.region-control select {
+  width: 100%;
+  min-height: 30px;
+  padding: 3px 26px 3px 0;
+  border: 0;
+  background-color: transparent;
+  color: var(--ink);
+  font-size: 0.79rem;
+  font-weight: 700;
+}
+.geo-button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: var(--green-soft);
+  border-color: transparent;
+  color: var(--forest);
+  font-size: 0.73rem;
+}
+.season-control {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 18px;
+  border-left: 1px solid var(--line);
+}
+.season-control b { color: var(--forest); font-size: 0.83rem; }
+.app-navigation {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 0 32px;
+}
 .nav {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.nav::-webkit-scrollbar { display: none; }
+.nav li { flex: 0 0 auto; }
 .nav a {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 42px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  color: rgba(237,246,239,0.8);
+  gap: 8px;
+  min-height: 43px;
+  padding: 10px 11px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
   text-decoration: none;
-  font-size: 0.96rem;
-  transition: background-color 0.18s ease, transform 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+  font-size: 0.77rem;
+  font-weight: 600;
+  transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
 }
 .nav a:hover {
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  transform: translateX(2px);
+  color: var(--forest);
+  background: #f7f8f4;
 }
 .nav a.on {
-  background: linear-gradient(180deg, #f4f6f1 0%, #edf1ea 100%);
+  background: transparent;
+  border-bottom-color: var(--forest);
   color: var(--forest);
-  box-shadow: var(--shadow-soft);
   font-weight: 700;
 }
 .nav svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.8;
@@ -170,46 +218,30 @@ button, input, select, textarea { font: inherit; }
   flex: none;
 }
 
-.side-foot {
-  margin-top: auto;
-  padding: 18px 10px 0;
-  border-top: 1px solid rgba(237,246,239,0.12);
-  color: rgba(237,246,239,0.52);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-}
-.side-foot p {
-  margin: 7px 0 0;
-  color: rgba(237,246,239,0.82);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1.45;
-}
-
 .wrap {
-  width: min(1380px, 100%);
+  width: min(1440px, 100%);
   margin: 0 auto;
-  padding: 30px 28px 72px;
+  padding: 42px 32px 72px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .topbar {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px 24px;
-  padding-inline: 6px;
+  gap: 28px;
+  padding: 4px 4px 20px;
+  border-bottom: 1px solid var(--line);
 }
-.topbar .section-kicker { margin-bottom: 10px; }
+.topbar .section-kicker { margin-bottom: 13px; }
 
 h1, h2, h3 { margin: 0; letter-spacing: -0.06em; color: var(--ink); }
 h1 {
-  font-size: clamp(2.25rem, 3.2vw, 3.45rem);
-  line-height: 1;
+  font-size: clamp(2.25rem, 4vw, 3.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.07em;
   font-weight: 800;
 }
 h2 {
@@ -219,23 +251,26 @@ h2 {
 }
 
 .lead {
-  margin-top: 12px;
-  max-width: 760px;
+  margin: 0;
+  max-width: 440px;
   color: var(--muted);
-  font-size: 1.04rem;
+  font-size: 0.94rem;
+  line-height: 1.65;
 }
 
-.season {
-  border: 1px solid rgba(23,63,50,0.12);
-  background: linear-gradient(180deg, #eef3ea 0%, #edf3ed 100%);
-  border-radius: 999px;
-  padding: 10px 16px;
+.overview-copy { max-width: 460px; padding-bottom: 3px; }
+.overview-copy > a {
+  display: inline-flex;
+  gap: 10px;
+  margin-top: 13px;
   color: var(--forest);
-  font-size: 0.9rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 12px 24px rgba(23,63,50,0.05);
+  text-decoration: none;
 }
+.overview-copy > a:hover { text-decoration: underline; }
+.overview-copy > a span { transition: transform 0.18s ease; }
+.overview-copy > a:hover span { transform: translate(2px, -2px); }
 
 .issues {
   border-left: 4px solid var(--bad);
@@ -265,12 +300,14 @@ h2 {
 .c-main {
   display: flex;
   flex-direction: column;
-  min-height: 370px;
-  padding: clamp(24px, 3.2vw, 40px);
+  min-height: 390px;
+  padding: clamp(26px, 3.5vw, 46px);
   border: 0;
-  border-radius: 22px;
-  background: var(--forest);
-  box-shadow: 0 18px 40px rgba(23,63,50,0.15);
+  border-radius: 16px;
+  background:
+    linear-gradient(90deg, rgba(14,48,37,0.96) 0%, rgba(19,58,43,0.91) 52%, rgba(17,52,40,0.74) 100%),
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=85") center 56% / cover no-repeat;
+  box-shadow: 0 22px 50px rgba(23,63,50,0.15);
   color: #f4f6ed;
 }
 .hero-top {
@@ -386,13 +423,13 @@ h2 {
   flex-direction: column;
   gap: 0;
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: 16px;
   background: #fff;
   overflow: hidden;
 }
 .c-chance {
-  padding: 22px 22px 18px;
-  background: #f5f6f0;
+  padding: 24px 24px 18px;
+  background: #f0f3eb;
 }
 .risk-score {
   display: flex;
@@ -423,7 +460,7 @@ h2 {
   font-size: 0.7rem;
 }
 .c-weather {
-  padding: 20px 22px;
+  padding: 20px 24px;
   border-top: 1px solid var(--line);
 }
 .w-items { display: flex; flex-direction: column; gap: 0; margin-top: 9px; }
@@ -489,7 +526,7 @@ h2 {
   min-height: 128px;
   padding: 19px 22px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 12px;
   background: #fff;
 }
 .accuracy-value {
@@ -510,7 +547,7 @@ h2 {
 .v-exact p { margin: 8px 0 0; color: var(--muted); font-size: 0.76rem; line-height: 1.5; }
 .c-tip {
   align-items: flex-start;
-  background: #edf2e8;
+  background: #eef2e8;
   border-color: #e0e8da;
 }
 .recommendation-mark {
@@ -536,90 +573,51 @@ h2 {
 .forecast-context-empty p { max-width: 29ch; color: var(--muted); font-size: 0.88rem; }
 .forecast-context-empty a { color: var(--forest); font-size: 0.83rem; font-weight: 700; text-decoration: none; }
 
-.wx {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  background: rgba(255,255,255,0.76);
-}
-.wx-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 18px;
-  flex-wrap: wrap;
-}
-.wx-head .lbl {
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--muted);
-}
-.wx-ctl {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 .wx-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
-  gap: 24px;
+  grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.6fr);
+  gap: 28px;
   align-items: center;
 }
 .wx-now {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
 }
 .wx {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+  padding: 22px 26px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: none;
 }
 
 .wx-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
 }
-.wx-head .lbl {
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 800;
-}
-.wx-ctl {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.wx-ctl select,
-.wx-ctl button {
-  min-height: 42px;
-}
-.wx-ctl button {
-  background: var(--forest);
-  border-color: var(--forest);
-  color: #eefaf0;
-}
+.wx-head h2 { margin-top: 4px; font-size: 1.15rem; }
+.wx-attribution { color: var(--muted); font-size: 0.69rem; }
 .wx-ic {
-  width: 46px;
-  min-width: 46px;
-  height: 46px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  background: rgba(100,134,107,0.1);
+  border-radius: 9px;
+  background: var(--green-soft);
   color: var(--forest);
 }
 .wx-ic svg {
-  width: 23px;
-  height: 23px;
+  width: 20px;
+  height: 20px;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.8;
@@ -627,31 +625,35 @@ h2 {
   stroke-linejoin: round;
 }
 .wx-t {
-  font-size: clamp(2.7rem, 4vw, 3.6rem);
+  font-size: clamp(2.2rem, 3.5vw, 3.1rem);
   line-height: 1;
   letter-spacing: -0.08em;
   font-weight: 800;
   color: var(--forest);
 }
 .wx-d {
-  font-size: 1.04rem;
+  font-size: 0.88rem;
   font-weight: 600;
 }
-.c-sub { color: var(--muted); font-size: 0.96rem; }
+.c-sub { color: var(--muted); font-size: 0.88rem; }
 .wx-rain {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0;
+  border-left: 1px solid var(--line);
 }
 .wx-cell {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(23,63,50,0.08);
-  background: linear-gradient(180deg, rgba(248,250,247,0.92), rgba(243,246,242,0.9));
+  gap: 6px;
+  min-height: 100px;
+  padding: 8px 18px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
 }
+.wx-cell:last-child { border-right: 0; }
 .wx-cell .w-t {
   display: block;
   color: var(--muted);
@@ -661,24 +663,25 @@ h2 {
   font-weight: 700;
 }
 .wx-cell b {
-  font-size: clamp(1.5rem, 2vw, 2.1rem);
+  font-size: 1.75rem;
   line-height: 1.1;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.05em;
   color: var(--forest);
 }
 .wx-cell span {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
 }
 .wx-tip {
-  background: rgba(100,134,107,0.08);
-  border: 1px solid rgba(100,134,107,0.2);
-  border-radius: 14px;
-  padding: 12px 14px;
+  background: var(--green-soft);
+  border-left: 3px solid var(--green);
+  padding: 10px 13px;
   color: var(--forest);
-  font-size: 0.96rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
+.wx > .v-note { margin: 0; font-size: 0.68rem; }
 
 .garden {
   display: flex;
@@ -970,11 +973,15 @@ h2 {
 .expert > summary {
   list-style: none;
   cursor: pointer;
-  padding: 16px 28px 16px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 17px 36px 17px 0;
   color: var(--forest);
   font-weight: 700;
   position: relative;
 }
+.expert > summary small { color: var(--muted); font-size: 0.7rem; font-weight: 500; }
 .expert > summary::-webkit-details-marker { display: none; }
 .expert > summary::after {
   content: "+";
@@ -1206,11 +1213,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 }
 
 @media (max-width: 1100px) {
-  .app { grid-template-columns: 220px minmax(0, 1fr); }
-  .wrap { padding: 26px 20px 56px; gap: 20px; }
-  .forecast-dashboard { grid-template-columns: minmax(0, 1.4fr) minmax(250px, 0.8fr); gap: 12px; }
-  .c-main { padding: 26px; }
-  .hero-reading { gap: 20px; }
+  .appbar-top, .app-navigation { padding-left: 22px; padding-right: 22px; }
+  .wrap { padding: 36px 22px 60px; gap: 24px; }
+  .forecast-dashboard { grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.85fr); gap: 12px; }
+  .c-main { padding: 30px; }
+  .hero-reading { gap: 22px; }
   .yield-reading { font-size: clamp(4rem, 7vw, 5.8rem); }
   .garden-workspace { grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; }
   .g-weather { grid-template-columns: 1fr; }
@@ -1223,34 +1230,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 }
 
 @media (max-width: 980px) {
-  .app { grid-template-columns: minmax(0, 1fr); }
-  .side {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    height: auto;
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
-    padding: 10px 20px;
-  }
-  .brand { flex: none; padding: 0; }
-  .brand svg { width: 28px; height: 28px; }
-  .side-caption, .side-foot { display: none; }
-  .side nav { min-width: 0; flex: 1; }
-  .nav {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 5px;
-    min-width: 0;
-    scrollbar-width: none;
-  }
-  .nav li { flex: 0 0 auto; }
-  .nav a { min-height: 38px; padding: 8px 10px; white-space: nowrap; font-size: 0.82rem; }
-  .nav svg { width: 16px; height: 16px; }
-  .wrap { padding-top: 24px; }
-  .forecast-dashboard { grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.85fr); }
-  .history-section { grid-template-columns: 190px minmax(0, 1fr); gap: 16px; }
+  .appbar-top { min-height: 68px; }
+  .app-navigation { overflow: hidden; }
+  .nav { gap: 5px; }
+  .nav a { min-height: 40px; padding: 8px 9px; font-size: 0.74rem; }
+  .wrap { padding-top: 30px; }
+  .topbar { gap: 18px; }
+  .forecast-dashboard { grid-template-columns: minmax(0, 1.2fr) minmax(230px, 0.85fr); }
+  .history-section { grid-template-columns: 180px minmax(0, 1fr); gap: 16px; }
+  .wx-grid { grid-template-columns: minmax(190px, 0.7fr) minmax(0, 1.3fr); gap: 14px; }
+  .wx-cell { padding-inline: 12px; }
 }
 
 @media (max-width: 760px) {
@@ -1258,27 +1247,45 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   .forecast-context { display: grid; grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1.2fr); }
   .c-weather { border-top: 0; border-left: 1px solid var(--line); }
   .forecast-bottom { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); }
-  .wx-grid { grid-template-columns: 1fr; }
+  .wx-grid { grid-template-columns: minmax(170px, 0.65fr) minmax(0, 1.35fr); gap: 8px; }
   .wx-rain { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .history-section { grid-template-columns: 190px minmax(0, 1fr); }
-  .history-intro { display: flex; }
-  .history-chart { border-left: 1px solid var(--line); border-top: 0; padding: 12px 0 12px 16px; }
+  .history-section { grid-template-columns: 1fr; }
+  .history-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; column-gap: 18px; }
+  .history-intro .section-kicker, .history-intro h2, .history-intro .hint { grid-column: 1; }
+  .history-key { grid-column: 2; grid-row: 1 / span 3; margin-top: 0; align-self: center; }
+  .history-chart { border-left: 0; border-top: 1px solid var(--line); padding: 18px 0 0; }
 }
 
 @media (max-width: 560px) {
-  .side { gap: 12px; padding: 9px 12px; }
-  .brand span small { display: none; }
-  .brand span b { font-size: 0.9rem; }
+  .appbar { position: sticky; }
+  .appbar-top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+  .brand-mark { width: 32px; height: 32px; font-size: 0.69rem; }
+  .brand span b { font-size: 0.78rem; }
+  .brand span small { font-size: 0.45rem; }
+  .app-controls { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+  .region-control { min-width: 0; }
+  .region-control span, .season-control span { font-size: 0.53rem; }
+  .region-control select { font-size: 0.74rem; }
+  .geo-button { min-height: 34px; padding: 6px 8px; font-size: 0.67rem; }
+  .season-control { padding-left: 9px; }
+  .season-control b { font-size: 0.71rem; }
+  .app-navigation { padding: 0 10px; }
   .nav { gap: 2px; }
-  .nav a { min-height: 36px; gap: 6px; padding: 7px 8px; font-size: 0.73rem; }
+  .nav a { min-height: 37px; gap: 6px; padding: 7px 8px; font-size: 0.69rem; }
   .nav svg { display: none; }
-  .wrap { padding: 22px 14px 36px; gap: 16px; }
-  .topbar { align-items: flex-start; gap: 10px; padding-inline: 2px; }
-  h1 { font-size: clamp(2rem, 8vw, 2.7rem); }
-  .lead { font-size: 0.88rem; line-height: 1.5; }
-  .season { padding: 7px 9px; font-size: 0.72rem; }
+  .wrap { padding: 25px 14px 36px; gap: 17px; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 12px; padding: 0 2px 17px; }
+  .topbar .section-kicker { margin-bottom: 8px; }
+  h1 { font-size: clamp(2.05rem, 9vw, 2.85rem); }
+  .lead { font-size: 0.85rem; line-height: 1.52; }
+  .overview-copy > a { margin-top: 8px; }
   .forecast-dashboard { gap: 10px; }
-  .c-main { min-height: auto; padding: 22px 18px; border-radius: 16px; }
+  .c-main { min-height: 345px; padding: 22px 18px; border-radius: 12px; }
   .hero-top { align-items: flex-start; }
   .hero-reading { align-items: flex-start; flex-direction: column; gap: 14px; margin: 30px 0 22px; }
   .yield-reading { font-size: clamp(4.5rem, 18vw, 6rem); }
@@ -1290,11 +1297,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   .forecast-bottom { grid-template-columns: 1fr; gap: 10px; }
   .c-acc, .c-tip { min-height: 0; padding: 17px; border-radius: 12px; }
   .accuracy-value { font-size: 2.1rem; }
-  .wx-head { align-items: flex-start; }
-  .wx-ctl { width: 100%; }
-  .wx-ctl select { flex: 1; min-width: 0; }
+  .wx { padding: 18px 15px 14px; gap: 14px; }
+  .wx-head { align-items: flex-end; }
+  .wx-grid { grid-template-columns: 1fr; gap: 16px; }
   .wx-now { align-items: flex-start; }
   .wx-rain { grid-template-columns: 1fr; }
+  .wx-rain { border-left: 0; border-top: 1px solid var(--line); }
+  .wx-cell { min-height: 0; display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 11px 2px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .wx-cell .w-t { grid-column: 1; }
+  .wx-cell b { grid-column: 2; grid-row: 1 / span 2; font-size: 1.35rem; }
+  .wx-cell span { grid-column: 1; }
+  .wx > .v-note { font-size: 0.64rem; }
   .garden { padding: 20px 16px; border-radius: 16px; }
   .garden-heading { padding-bottom: 16px; }
   .garden-step { display: none; }
@@ -1323,10 +1336,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   .data-record-head button { flex: none; }
   .expert { padding: 0 14px 2px !important; }
   .expert-body .top { grid-template-columns: 1fr; }
+  .expert-body .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .expert-body .grid2 > * { min-width: 0; }
+  .expert-body .scroll { min-width: 0; max-width: 100%; }
   .toolbar { align-items: stretch; }
   .toolbar > *, .toolbar .row { width: 100%; }
   .toolbar .row > button { flex: 1; }
   .grid2 { gap: 18px; }
+  .banner { border-radius: 12px; padding: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1337,13 +1354,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 </head>
 <body>
 <div class="app">
-<aside class="side">
-  <a class="brand" href="#verdict" aria-label="Урожай — на главную">
-    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 34C16 24 22 15 31 7"/><path d="M20 22c-6 0-10-3-11-9 6 0 10 3 11 9z"/><path d="M24 16c0-6 3-9 8-10 0 6-3 9-8 10z"/><path d="M16 28c-5 1-8-1-10-5 5-1 8 1 10 5z"/><path d="M22 23c5-2 9-1 11 3-5 2-9 1-11-3z"/></svg>
-    <span><b>Урожай</b><small>ПРОГНОЗ И АНАЛИТИКА</small></span>
-  </a>
-  <nav aria-label="Разделы">
-    <div class="side-caption">Рабочая область</div>
+<header class="appbar">
+  <div class="appbar-top">
+    <a class="brand" href="#verdict" aria-label="Crop Yield Forecast — главная">
+      <span class="brand-mark" aria-hidden="true">CY</span>
+      <span><b>Crop Yield Forecast</b><small>AGRICULTURAL INTELLIGENCE</small></span>
+    </a>
+    <div class="app-controls">
+      <label class="region-control" for="wx-city"><span>Регион прогноза погоды</span><select id="wx-city"></select></label>
+      <button class="geo-button" id="wx-geo" aria-label="Определить моё место">Моё место</button>
+      <div class="season-control"><span>ТЕКУЩИЙ СЕЗОН</span><b id="seasonChip"></b></div>
+    </div>
+  </div>
+  <nav class="app-navigation" aria-label="Основная навигация">
     <ul class="nav">
       <li><a href="#verdict" class="on"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></svg>Главная</a></li>
       <li><a href="#pogoda"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3 3 0 0 0 7 18z"/></svg>Погода</a></li>
@@ -1354,20 +1377,18 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
       <li><a href="#dannye"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg>Данные</a></li>
     </ul>
   </nav>
-  <div class="side-foot">
-    <span>СОХРАНЕНИЕ</span>
-    <p>Данные остаются<br>в этом браузере</p>
-  </div>
-</aside>
+</header>
 
 <main class="wrap">
   <header class="topbar">
-    <div>
+    <div class="intro-heading">
       <div class="section-kicker">ОБЗОР СЕЗОНА</div>
-      <h1>Каким будет урожай?</h1>
-      <p class="lead">Понятный прогноз урожая по погоде и прошлым сезонам — чтобы оценить риски и лучше подготовиться к сезону.</p>
+      <h1>Урожай начинается<br>с точного прогноза.</h1>
     </div>
-    <span class="season" id="seasonChip"></span>
+    <div class="overview-copy">
+      <p class="lead">Оценка урожайности на основе погоды и прошлых сезонов — для планирования работ и своевременной подготовки.</p>
+      <a href="#grafik">Изучить динамику урожая <span aria-hidden="true">↗</span></a>
+    </div>
   </header>
   <div class="issues" id="issues"></div>
 
@@ -1375,12 +1396,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
   <section class="card wx" id="pogoda">
     <div class="wx-head">
-      <div class="lbl">Погода сейчас</div>
-      <div class="wx-ctl">
-        <label for="wx-city" class="sr">Город</label>
-        <select id="wx-city"></select>
-        <button id="wx-geo">Моё место</button>
-      </div>
+      <div><div class="section-kicker">УСЛОВИЯ СЕЗОНА</div><h2>Погода</h2></div>
+      <span class="wx-attribution">Данные Open-Meteo</span>
     </div>
     <div id="wx-body" aria-live="polite"><p class="c-sub">Загружаем погоду…</p></div>
     <p class="v-note">Погода и прогноз осадков: <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0). Обновляются при открытии страницы.</p>
@@ -1450,7 +1467,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <p class="source" id="demoNote" hidden><b>Откуда данные.</b> Пшеница, Казахстан в целом, 2000–2025. Урожай за 2000–2024 годы — FAOSTAT (ООН), за 2025 год — предварительные итоги Бюро национальной статистики РК (15,8 ц/га). Погода — NASA POWER, среднее по трём точкам зернового пояса: Костанайская, Северо-Казахстанская и Акмолинская области. Официальных итогов урожая 2026 года ещё нет.</p>
 
   <details class="expert" id="specialist">
-    <summary>Подробности для специалистов</summary>
+    <summary><span>Аналитика для специалистов</span><small>Методы · байесовская модель · проверка точности</small></summary>
     <div class="expert-body">
 
   <section class="block">
@@ -1510,7 +1527,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   </details>
 
   <details class="expert" id="dannye">
-    <summary>Изменить данные или загрузить свои</summary>
+    <summary><span>Данные и настройки прогноза</span><small>Исторические сезоны · CSV · параметры модели</small></summary>
     <div class="expert-body">
   <section class="data">
     <div class="data-config">
