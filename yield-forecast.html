@@ -1,6 +1,6 @@
 <title>Crop Yield Forecast — прогноз урожайности</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="yield-forecast.css?v=6">
+<link rel="stylesheet" href="yield-forecast.css?v=7">
 <style>/* Build boundary: shared design rules live in yield-forecast.css. */</style>
 
 
@@ -58,19 +58,6 @@
     </section>
   </div>
 
-  <section class="history-section" id="grafik">
-    <div class="history-intro">
-      <div class="section-kicker">АНАЛИТИКА СЕЗОНОВ</div>
-      <h2>Как менялся урожай</h2>
-      <p class="hint">Факт за год, проверка прогноза по прошлым сезонам и текущая оценка на одной шкале.</p>
-      <div class="history-key"><span><i class="key-fact"></i>Фактический урожай</span><span><i class="key-model"></i>Расчёт модели</span><span><i class="key-current"></i>Прогноз</span></div>
-    </div>
-    <figure class="chart history-chart">
-      <div id="chart"></div>
-      <p class="msg" id="chartUnit"></p>
-    </figure>
-  </section>
-
   <section class="garden card" id="ogorod">
     <div class="garden-heading"><div><div class="section-kicker">КАЛЬКУЛЯТОР ОГОРОДА</div><h2>План урожая по грядкам</h2><p class="hint">Добавьте культуры, площадь и условия сезона — результат пересчитается автоматически.</p></div><span class="garden-step">01 <i>/</i> 02</span></div>
     <div class="garden-workspace">
@@ -102,6 +89,19 @@
         <p class="v-note">Ориентировочная оценка для открытого грунта и теплиц. Сорт, почва и уход влияют на фактический урожай. Грядки сохраняются только в этом браузере.</p>
       </aside>
     </div>
+  </section>
+
+  <section class="history-section" id="grafik">
+    <div class="history-intro">
+      <div class="section-kicker">АНАЛИТИКА СЕЗОНОВ</div>
+      <h2>Как менялся урожай</h2>
+      <p class="hint">Факт за год, проверка прогноза по прошлым сезонам и текущая оценка на одной шкале.</p>
+      <div class="history-key"><span><i class="key-fact"></i>Фактический урожай</span><span><i class="key-model"></i>Расчёт модели</span><span><i class="key-current"></i>Прогноз</span></div>
+    </div>
+    <figure class="chart history-chart">
+      <div id="chart"></div>
+      <p class="msg" id="chartUnit"></p>
+    </figure>
   </section>
 
   <div class="insight-grid">
