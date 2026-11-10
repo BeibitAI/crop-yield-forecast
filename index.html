@@ -53,8 +53,17 @@ img { max-width: 100%; }
       <h1>Урожай начинается<br>с точного прогноза.</h1>
     </div>
     <div class="overview-copy">
+      <div class="topbar-actions">
+        <div class="unit-toggle" role="group" aria-label="Единицы измерения">
+          <span class="unit-toggle-label">Единицы:</span>
+          <div class="unit-pills">
+            <button type="button" class="unit-pill" data-unit="t">т/га</button>
+            <button type="button" class="unit-pill" data-unit="c">ц/га</button>
+          </div>
+        </div>
+        <a class="overview-link" href="#grafik">Изучить динамику урожая <span aria-hidden="true">↗</span></a>
+      </div>
       <p class="lead">Оценка урожайности на основе погоды и прошлых сезонов — для планирования работ и своевременной подготовки.</p>
-      <a href="#grafik">Изучить динамику урожая <span aria-hidden="true">↗</span></a>
     </div>
   </header>
   <div class="issues" id="issues"></div>
@@ -250,6 +259,14 @@ img { max-width: 100%; }
   </section>
     </div>
   </details>
+  <nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
+    <a href="#verdict" class="m-nav-item on"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></svg><span>Главная</span></a>
+    <a href="#pogoda" class="m-nav-item"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3 3 0 0 0 7 18z"/></svg><span>Погода</span></a>
+    <a href="#ogorod" class="m-nav-item"><svg viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4 3-7 8-7 0 5-3 7-8 7zM12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 5.5 7 5.5z"/></svg><span>Огород</span></a>
+    <a href="#grafik" class="m-nav-item"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l3-4 3 2 4-6"/></svg><span>График</span></a>
+    <a href="#specialist" class="m-nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Анализ</span></a>
+    <a href="#dannye" class="m-nav-item"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg><span>Данные</span></a>
+  </nav>
 </main>
 </div>
 
@@ -909,7 +926,9 @@ $('g-rows').addEventListener('change', e => {
   saveG(); renderGardenRows(); renderGarden();
 });
 $('g-rows').addEventListener('click', e => {
-  const i = e.target.dataset.gdel; if (i == null) return;
+  const btn = e.target.closest('[data-gdel]');
+  if (!btn) return;
+  const i = btn.dataset.gdel;
   G.rows.splice(+i, 1); saveG(); renderGardenRows(); renderGarden();
 });
 $('g-add').onclick = () => { G.rows.push({ crop: 'tomato', qty: '', place: 'open' }); saveG(); renderGardenRows(); renderGarden(); $(`g${G.rows.length - 1}-qty`).focus(); };
@@ -931,13 +950,30 @@ function syncControls() {
   $('unit').value = S.unit; $('minTrain').value = S.minTrain; $('area').value = S.area || '';
   $('t-year').value = S.target.year; $('t-precip').value = S.target.precip; $('t-hot').value = S.target.hot;
   $('thr').value = S.threshold || ''; $('prior').value = S.prior === 'neutral' ? 'neutral' : 'agro';
+  document.querySelectorAll('.unit-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.unit === S.unit);
+  });
 }
+document.querySelectorAll('.unit-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (S.unit !== btn.dataset.unit) {
+      S.unit = btn.dataset.unit;
+      syncControls();
+      update();
+    }
+  });
+});
 $('thr').oninput = e => { S.threshold = e.target.value; update(); };
 $('prior').onchange = e => { S.prior = e.target.value; update(); };
 const update = () => { save(); render(); };
 
 $('rows').addEventListener('input', e => { const t = e.target; if (!t.dataset.f) return; S.rows[+t.dataset.i][t.dataset.f] = t.value; update(); });
-$('rows').addEventListener('click', e => { const i = e.target.dataset.del; if (i == null) return; S.rows.splice(+i, 1); renderRows(); update(); });
+$('rows').addEventListener('click', e => {
+  const btn = e.target.closest('[data-del]');
+  if (!btn) return;
+  const i = btn.dataset.del;
+  S.rows.splice(+i, 1); renderRows(); update();
+});
 $('addBtn').onclick = () => {
   const years = S.rows.map(r => num(r.year)).filter(Number.isFinite);
   S.rows.push({ year: years.length ? String(Math.max(...years) + 1) : '', y: '', precip: '', hot: '' });
@@ -1123,8 +1159,10 @@ $('wx-geo').onclick = () => {
 fillCities();
 loadWeather();
 
-// Боковое меню: подсветка раздела и раскрытие свёрнутых разделов при переходе
-const navLinks = [...document.querySelectorAll('.nav a')];
+// Боковое меню и мобильная навигация: подсветка раздела и следование за скроллом
+const navLinks = [...document.querySelectorAll('.nav a, .m-nav-item')];
+const sectionOrder = ['verdict', 'pogoda', 'ogorod', 'grafik', 'slova', 'specialist', 'dannye'];
+
 function setActiveNav(id) {
   navLinks.forEach(link => {
     const active = link.getAttribute('href') === '#' + id;
@@ -1133,40 +1171,73 @@ function setActiveNav(id) {
     else link.removeAttribute('aria-current');
   });
 }
+
 function goTo(id) {
   const el = document.getElementById(id);
-  if (el && el.tagName === 'DETAILS') el.open = true;
+  if (el) {
+    if (el.tagName === 'DETAILS') el.open = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   setActiveNav(id);
 }
-document.querySelectorAll('.nav a, .brand, .banner a').forEach(a => a.addEventListener('click', () => goTo(a.getAttribute('href').slice(1))));
-if (typeof location !== 'undefined' && /^#[\w-]+$/.test(location.hash)) goTo(location.hash.slice(1));
+
+document.querySelectorAll('.nav a, .m-nav-item, .brand, .banner a').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.slice(1);
+      goTo(targetId);
+      if (history.pushState) history.pushState(null, '', href);
+    }
+  });
+});
+
+if (typeof location !== 'undefined' && /^#[\w-]+$/.test(location.hash)) {
+  goTo(location.hash.slice(1));
+}
 
 let navFrame = 0;
 function updateActiveNavOnScroll() {
   if (navFrame) return;
   navFrame = requestAnimationFrame(() => {
     navFrame = 0;
-    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
-    const marker = atBottom ? window.innerHeight : window.innerHeight * 0.32;
-    let activeId = navLinks[0].getAttribute('href').slice(1);
-    let activeTop = -Infinity;
-    for (const link of navLinks) {
-      const section = document.getElementById(link.getAttribute('href').slice(1));
+    if (!navLinks.length) return;
+    const scrollPos = window.scrollY || window.pageYOffset;
+    const windowH = window.innerHeight;
+    const docH = document.documentElement.scrollHeight;
+    
+    // Если страница прокручена в самый низ — активен последний раздел
+    if (scrollPos + windowH >= docH - 30) {
+      setActiveNav(sectionOrder[sectionOrder.length - 1]);
+      return;
+    }
+
+    const isDesktop = window.innerWidth > 860;
+    const threshold = Math.min(240, windowH * 0.35);
+    let activeId = sectionOrder[0];
+
+    for (const id of sectionOrder) {
+      // На десктопе "Погода" находится в первом экране рядом с "Главной"
+      if (id === 'pogoda' && isDesktop) continue;
+      const section = document.getElementById(id);
       if (!section) continue;
-      const top = section.getBoundingClientRect().top;
-      if (top <= marker && top > activeTop) {
-        activeId = section.id;
-        activeTop = top;
-      } else if (top <= marker && top === activeTop && window.scrollY > 0 && location.hash === '#' + section.id) {
-        activeId = section.id;
+      const rect = section.getBoundingClientRect();
+      if (rect.top <= threshold) {
+        activeId = id;
       }
     }
+
     setActiveNav(activeId);
   });
 }
+
 window.addEventListener('scroll', updateActiveNavOnScroll, { passive: true });
 window.addEventListener('resize', updateActiveNavOnScroll);
-window.addEventListener('hashchange', updateActiveNavOnScroll);
+window.addEventListener('hashchange', () => {
+  if (location.hash) goTo(location.hash.slice(1));
+  else updateActiveNavOnScroll();
+});
 updateActiveNavOnScroll();
 
 syncControls(); renderRows(); renderGardenRows(); render();
