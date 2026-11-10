@@ -8,21 +8,20 @@ All application styles are maintained in `yield-forecast.css`, linked from the s
 
 | Token | Value | Use |
 |---|---|---|
-| `--bg` | `#F5F6F0` | Warm workspace background |
+| `--bg` | `#F6F6F0` | Warm, lightly botanical workspace background |
 | `--surface` | `#FFFFFF` | Main content surfaces |
-| `--surface-soft` | `#ECEFE7` | Soft neutral areas |
-| `--forest` | `#183F32` | Brand and primary actions |
-| `--forest-light` | `#527B5F` | Secondary accents and chart |
-| `--surface-green` | `#E6EFE5` | Positive and explanatory panels |
-| `--ink` | `#202923` | Main text |
-| `--muted` | `#778178` | Supporting text |
-| `--line` | `#E3E8DF` | Borders and separators |
+| `--surface-green` | `#E8EEE2` | Muted sage panels and positive states |
+| `--forest` | `#304B37` | Brand, key figures, and primary actions |
+| `--forest-light` | `#627D55` | Secondary accents and chart |
+| `--ink` | `#30382F` | Main text |
+| `--muted` | `#788073` | Supporting text |
+| `--line` | `#E7E8DE` | Soft borders and separators |
 
-Typography uses platform system fonts to avoid an extra font download. Color, spacing, surface, radius, and shadow values are defined centrally as CSS variables. Buttons, fields, focus indicators, error notices, and reduced-motion behavior share the same visual rules.
+Typography uses platform fonts, with an editorial serif for headings and a clean sans-serif for interface text. The palette, spacing, surfaces, radii, and shadows are defined centrally as CSS variables. Buttons, fields, focus indicators, error notices, and reduced-motion behavior share the same visual rules.
 
 ## Page composition
 
-- **Navigation** is a persistent desktop sidebar with brand, season, section links, region selector, and location action. On smaller screens it becomes a sticky compact header with horizontally scrollable section links, remaining available while scrolling.
+- **Navigation** is a softly tinted, persistent desktop sidebar with brand, season, section links, region selector, and location action. On smaller screens it becomes a compact sticky header, with bottom navigation on phones.
 - **Season overview** uses a two-part grid: the large yield forecast and its risk, factors, and recommendation occupy the main area; current Open-Meteo conditions sit alongside it. At tablet and phone widths, the weather section moves below the forecast.
 - **Garden calculator** follows the season overview. It has a separate full-width form and a dedicated result area. Crop, quantity, growing location, per-bed result, and season settings remain visible and usable.
 - **History** follows the garden calculator as a full-width analytical section. Its chart scales to the container and keeps the measured yield, model estimate, and current forecast visually distinct.
@@ -33,7 +32,7 @@ Typography uses platform system fonts to avoid an extra font download. Color, sp
 
 Tables are sized for their contents rather than forced to share one layout. Method comparisons, per-year validation, and historical records have individual minimum widths and column proportions; long table views scroll inside their own containers. Numeric cells use tabular alignment, descriptions can wrap, and row hover does not alter the table geometry.
 
-Responsive breakpoints are defined at 1100, 820, 600, and 370 px. The desktop sidebar becomes a compact header at tablet size, then the forecast/weather grid and calculator become single-column layouts on phones. The document itself must not scroll horizontally; wide tables may scroll only within their local container.
+Responsive breakpoints retain a desktop sidebar down to 760 px; below that it becomes a compact sticky header, with bottom navigation on phones. The forecast and weather sit side-by-side on wider screens and stack below 860 px. The document itself must not scroll horizontally; wide tables may scroll only within their local container.
 
 ## Functional compatibility
 
