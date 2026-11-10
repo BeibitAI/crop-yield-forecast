@@ -1342,15 +1342,16 @@ h3 {
   align-items: center;
   justify-content: center;
   min-height: 38px;
-  padding: 6px 4px;
+  padding: 6px 2px;
   border: 1px solid transparent;
   border-radius: var(--radius-xs);
   background: #FFFFFF;
   color: var(--muted);
-  font-size: 0.73rem;
+  font-size: 0.67rem;
   font-weight: 650;
   text-align: center;
   white-space: normal;
+  overflow-wrap: anywhere;
   line-height: 1.15;
   cursor: pointer;
   box-shadow: var(--shadow-xs);
@@ -2958,6 +2959,16 @@ h1, h2, h3,
   box-shadow: none;
 }
 
+.brand-mark svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .brand span b {
   font-size: .98rem;
 }
@@ -3151,6 +3162,10 @@ h2 {
 .comparison-caption b,
 .comparison-scale {
   color: #4F5B4C;
+}
+
+.hero-note b {
+  color: #3D4D3B;
 }
 
 .comparison-track {
@@ -3493,6 +3508,15 @@ tbody tr:hover {
   .g-row select:nth-of-type(2) { grid-area: place; }
   .g-row .g-res { grid-area: res; }
   .g-row button.del { grid-area: del; align-self: center; }
+
+  .seg label {
+    min-width: 0;
+    padding-right: 2px;
+    padding-left: 2px;
+    font-size: .67rem;
+    letter-spacing: -.02em;
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (max-width: 640px) {
