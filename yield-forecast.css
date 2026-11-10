@@ -622,9 +622,9 @@ h3 {
 
 .overview-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.48fr) minmax(320px, 0.82fr);
-  align-items: stretch;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: 24px;
 }
 
 .card {
@@ -1086,10 +1086,13 @@ h3 {
 
 .wx {
   min-width: 0;
+  max-width: 380px;
+  width: 100%;
+  align-self: start;
   display: flex;
   flex-direction: column;
-  padding: 24px 26px;
-  gap: 16px;
+  padding: 22px 24px;
+  gap: 14px;
 }
 
 .wx-head {
@@ -1227,8 +1230,9 @@ h3 {
 }
 
 .wx > .v-note {
-  margin-top: auto;
+  margin: 6px 0 0;
   font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 /* ==========================================================================
@@ -1296,8 +1300,9 @@ h3 {
 /* Segmented Condition Pills */
 .g-weather {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  max-width: 960px;
 }
 
 .seg {
@@ -1307,16 +1312,18 @@ h3 {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--bg);
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
+  align-items: center;
 }
 
 .seg legend {
+  grid-column: 1 / -1;
   width: 100%;
   margin-bottom: 8px;
   color: var(--ink);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 750;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1331,17 +1338,20 @@ h3 {
 }
 
 .seg label {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 8px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 6px 4px;
   border: 1px solid transparent;
   border-radius: var(--radius-xs);
   background: #FFFFFF;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.73rem;
   font-weight: 650;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.15;
   cursor: pointer;
   box-shadow: var(--shadow-xs);
   transition: all 0.16s ease;
@@ -1394,6 +1404,7 @@ h3 {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: #FFFFFF;
+  max-width: 960px;
   box-shadow: var(--shadow-xs);
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
@@ -2140,6 +2151,32 @@ caption {
   overflow-y: auto;
 }
 
+/* Compact Content-Fitted Widths for Analytics Tables */
+#methods {
+  width: 100%;
+  max-width: 660px;
+  table-layout: fixed;
+}
+
+#methods th:nth-child(1), #methods td:nth-child(1) { width: 33%; }
+#methods th:nth-child(2), #methods td:nth-child(2) { width: 13%; }
+#methods th:nth-child(3), #methods td:nth-child(3) { width: 13%; }
+#methods th:nth-child(4), #methods td:nth-child(4) { width: 14%; }
+#methods th:nth-child(5), #methods td:nth-child(5) { width: 14%; }
+#methods th:nth-child(6), #methods td:nth-child(6) { width: 13%; }
+
+#years {
+  width: 100%;
+  max-width: 480px;
+  table-layout: fixed;
+}
+
+#years th:nth-child(1), #years td:nth-child(1) { width: 16%; }
+#years th:nth-child(2), #years td:nth-child(2) { width: 21%; }
+#years th:nth-child(3), #years td:nth-child(3) { width: 21%; }
+#years th:nth-child(4), #years td:nth-child(4) { width: 21%; }
+#years th:nth-child(5), #years td:nth-child(5) { width: 21%; }
+
 .how {
   padding: 20px 24px;
   border-left: 4px solid var(--forest);
@@ -2189,6 +2226,7 @@ caption {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--bg);
+  max-width: 860px;
 }
 
 .f {
@@ -2237,6 +2275,7 @@ caption {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: #FFFFFF;
+  max-width: 860px;
 }
 
 .target .msg {
@@ -2275,12 +2314,15 @@ caption {
   border-radius: var(--radius-md);
   background: #FFFFFF;
   max-height: 480px;
+  max-width: 760px;
   overflow-y: auto;
+  overflow-x: auto;
 }
 
 .data-records table.dt {
   width: 100%;
-  min-width: 720px;
+  max-width: 760px;
+  min-width: 620px;
   table-layout: fixed;
 }
 
@@ -2290,15 +2332,15 @@ caption {
 }
 
 .data-records table.dt th:nth-child(1),
-.data-records table.dt td:nth-child(1) { width: 90px; }
+.data-records table.dt td:nth-child(1) { width: 80px; }
 .data-records table.dt th:nth-child(2),
-.data-records table.dt td:nth-child(2) { width: 140px; }
+.data-records table.dt td:nth-child(2) { width: 130px; }
 .data-records table.dt th:nth-child(3),
-.data-records table.dt td:nth-child(3) { width: 180px; }
+.data-records table.dt td:nth-child(3) { width: 170px; }
 .data-records table.dt th:nth-child(4),
-.data-records table.dt td:nth-child(4) { width: 220px; }
+.data-records table.dt td:nth-child(4) { width: 210px; }
 .data-records table.dt th:nth-child(5),
-.data-records table.dt td:nth-child(5) { width: 60px; text-align: center; }
+.data-records table.dt td:nth-child(5) { width: 50px; text-align: center; }
 
 .data-records table.dt input {
   width: 100%;
@@ -2332,6 +2374,7 @@ caption {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--bg);
+  max-width: 860px;
 }
 
 .import > summary {
@@ -2468,6 +2511,17 @@ select:disabled {
   }
 }
 
+@media (max-width: 1200px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 18px;
+  }
+  .wx {
+    max-width: 330px;
+    padding: 18px 20px;
+  }
+}
+
 /* Tablets & Small Laptops (<= 1100px) */
 @media (max-width: 1100px) {
   #verdict, #pogoda, #ogorod, #grafik, #slova, #specialist, #dannye {
@@ -2571,6 +2625,10 @@ select:disabled {
 
   .overview-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wx {
+    max-width: 560px;
   }
 
   .wx-rain {

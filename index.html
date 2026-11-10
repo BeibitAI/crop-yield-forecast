@@ -1218,8 +1218,25 @@ function updateActiveNavOnScroll() {
     let activeId = sectionOrder[0];
 
     for (const id of sectionOrder) {
-      // На десктопе "Погода" находится в первом экране рядом с "Главной"
-      if (id === 'pogoda' && isDesktop) continue;
+      if (id === 'pogoda' && isDesktop) {
+        // На десктопе погода видна рядом с verdict в overview-grid.
+        // Подсвечиваем «Погода», когда пользователь прокрутил
+        // ниже главной карточки (c-main) — т.е. видит подкарточки
+        // «Риск недобора», «Факторы сезона», «Точность», «Что можно сделать»
+        const verdict = document.getElementById('verdict');
+        const ogorod = document.getElementById('ogorod');
+        if (verdict && ogorod) {
+          const heroCard = verdict.querySelector('.c-main');
+          const triggerEl = heroCard || verdict;
+          const triggerBottom = triggerEl.getBoundingClientRect().bottom;
+          const ogorodTop = ogorod.getBoundingClientRect().top;
+          // Если главная карточка уже уходит вверх, но огород ещё не в зоне — погода
+          if (triggerBottom < threshold * 0.6 && ogorodTop > threshold) {
+            activeId = 'pogoda';
+          }
+        }
+        continue;
+      }
       const section = document.getElementById(id);
       if (!section) continue;
       const rect = section.getBoundingClientRect();
