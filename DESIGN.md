@@ -22,7 +22,7 @@ Typography uses platform system fonts to avoid an extra font download. Color, sp
 
 ## Page composition
 
-- **Navigation** is a persistent desktop sidebar with brand, season, section links, region selector, and location action. On smaller screens it becomes a compact header with horizontally scrollable section links.
+- **Navigation** is a persistent desktop sidebar with brand, season, section links, region selector, and location action. On smaller screens it becomes a sticky compact header with horizontally scrollable section links, remaining available while scrolling.
 - **Season overview** uses a two-part grid: the large yield forecast and its risk, factors, and recommendation occupy the main area; current Open-Meteo conditions sit alongside it. At tablet and phone widths, the weather section moves below the forecast.
 - **History** follows as a full-width analytical section. Its chart scales to the container and keeps the measured yield, model estimate, and current forecast visually distinct.
 - **Garden calculator** has a separate full-width form and a dedicated result area. Crop, quantity, growing location, per-bed result, and season settings remain visible and usable.
