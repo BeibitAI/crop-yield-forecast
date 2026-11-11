@@ -11,275 +11,23 @@ body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 </style>
-<title>Прогноз урожайности культур</title>
+<title>Crop Yield Forecast — прогноз урожайности</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=PT+Serif:wght@400;700&display=swap">
-<style>
-/* Layout: тёмно-зелёная боковая панель с разделами, справа сетка карточек на кремовом фоне.
-   Сознательно одна светлая тема («садовая тетрадь»), поэтому тёмных вариантов токенов нет. */
-:root {
-  --bg: #F3F0E8;          /* кремовый фон страницы */
-  --surface: #FBFAF6;     /* карточки */
-  --ink: #1F2B22;
-  --muted: #687264;
-  --line: #E4DFD3;
-  --forest: #23402A;      /* боковая панель, главные кнопки */
-  --forest-ink: #EDF0E6;
-  --field: #4E7148;       /* фактический урожай */
-  --grain: #2F4E33;       /* прогноз */
-  --grain-soft: #E4E8DA;  /* мягкая шалфейная заливка */
-  --leaf-1: #3E5E3A; --leaf-2: #5B7F52; --leaf-3: #7A9A6C;
-  --pot: #EFEBE2; --pot-line: #D6CFBF;
-  --bad: #A8523A;
-  --bad-soft: #F1DDD3;
-  --good: #3D6B45;
-  --good-soft: #E1EADB;
-  --display: "PT Serif", Georgia, "Times New Roman", serif;
-  --body: "Golos Text", "Segoe UI", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
-  color-scheme: light;
-}
-html, body { min-height: 100%; }
-body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
-.app { display: grid; grid-template-columns: 228px minmax(0, 1fr); min-height: 100vh; }
-.side { background: var(--forest); color: var(--forest-ink); position: sticky; top: 0; height: 100vh; box-sizing: border-box; padding: 26px 16px; display: flex; flex-direction: column; gap: 28px; }
-.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; font-family: var(--display); font-size: 20px; color: var(--forest-ink); text-decoration: none; }
-.brand svg { width: 40px; height: 40px; }
-.brand svg path { fill: none; stroke: var(--forest-ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.nav { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.nav a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; color: var(--forest-ink); text-decoration: none; font-size: 15px; }
-.nav a:hover { background: color-mix(in srgb, var(--forest-ink) 10%, transparent); }
-.nav a.on { background: var(--surface); color: var(--forest); font-weight: 600; }
-.nav a:focus-visible { outline: 2px solid var(--forest-ink); outline-offset: 2px; }
-.nav svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.side-foot { margin-top: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 14px; opacity: .92; }
-.side-foot .ring { width: 64px; height: 64px; border-radius: 50%; background: color-mix(in srgb, var(--forest-ink) 12%, transparent); display: grid; place-items: center; }
-.side-foot svg { width: 34px; height: 34px; fill: none; stroke: var(--forest-ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-@media (max-width: 900px) {
-  .app { grid-template-columns: minmax(0, 1fr); }
-  .side { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; height: auto; flex-direction: row; align-items: center; gap: 14px; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  .brand span, .side-foot { display: none; }
-  .brand { padding: 0; }
-  .brand svg { width: 32px; height: 32px; }
-  .nav { flex-direction: row; overflow-x: auto; gap: 2px; min-width: 0; scrollbar-width: none; }
-  .nav a { padding: 8px 10px; white-space: nowrap; font-size: 14px; }
-  .nav svg { display: none; }
-}
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--forest); }
-.wrap { max-width: 1120px; width: 100%; box-sizing: border-box; margin: 0 auto; padding-block: 30px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px; }
-@media (min-width: 901px) { .wrap { padding-left: 32px; padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
-h1, h2 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; letter-spacing: -0.005em; }
-h1 { font-size: clamp(28px, 4.4vw, 38px); line-height: 1.15; }
-h2 { font-size: 22px; }
-.topbar { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 20px; }
-.season { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 500; white-space: nowrap; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(35, 64, 42, .05); min-width: 0; box-sizing: border-box; }
-.lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); }
-.art { flex: none; width: clamp(64px, 8vw, 128px); height: clamp(64px, 8vw, 128px); }
-.c-text { flex: 1 1 auto; }
-.art .l1 { fill: var(--leaf-1); } .art .l2 { fill: var(--leaf-2); } .art .l3 { fill: var(--leaf-3); }
-.art .st { fill: none; stroke: var(--leaf-1); stroke-width: 2; stroke-linecap: round; }
-.art .pot { fill: var(--pot); stroke: var(--pot-line); stroke-width: 1.5; }
-.art .can { fill: var(--grain-soft); stroke: var(--leaf-1); stroke-width: 2; stroke-linejoin: round; }
-.art .drop { fill: var(--leaf-3); }
-.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; background: var(--grain-soft); border: 1px solid var(--line); border-radius: 16px; padding: 18px 24px; }
-.banner svg { width: 46px; height: 46px; flex: none; }
-.banner .t { flex: 1 1 260px; min-width: 0; }
-.banner .t b { font-family: var(--display); font-weight: 400; font-size: 20px; display: block; }
-.banner .t span { color: var(--muted); font-size: 15px; }
-.btn-dark { display: inline-flex; align-items: center; gap: 10px; background: var(--forest); color: var(--forest-ink); text-decoration: none; border-radius: 10px; padding: 12px 20px; font-weight: 500; }
-.btn-dark:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
-p { margin: 0; }
-.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 500; }
-.lead { color: var(--muted); max-width: 64ch; }
-header { display: flex; flex-direction: column; gap: 10px; }
-.note { border: 1px dashed var(--grain); background: var(--grain-soft); padding: 10px 14px; border-radius: 8px; max-width: 80ch; font-size: 14px; }
-.issues { border-left: 3px solid var(--bad); padding: 8px 12px; color: var(--ink); font-size: 14px; }
-.issues:empty { display: none; }
-
-.top { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 20px; align-items: stretch; }
-@media (max-width: 820px) { .top { grid-template-columns: minmax(0, 1fr); } }
-.fc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.fc-year { font-family: var(--display); font-size: 15px; }
-.fc-num { font-family: var(--display); font-size: 48px; line-height: 1; color: var(--grain); font-variant-numeric: tabular-nums; }
-.fc-num small { font-family: var(--body); font-size: 16px; color: var(--muted); margin-left: 6px; }
-.fc-range { font-variant-numeric: tabular-nums; }
-.fc-meta { color: var(--muted); font-size: 13px; }
-.fc hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
-.chip { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--grain-soft); color: var(--grain); font-weight: 600; }
-.chart { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(35, 64, 42, .05); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
-.legend i { display: inline-block; width: 18px; height: 0; vertical-align: middle; margin-right: 6px; border-top: 2.5px solid var(--field); }
-.legend i.bt { border-top: 2px dashed var(--grain); }
-.legend i.fcm { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--grain); }
-#chart svg { display: block; width: 100%; height: auto; }
-#chart .grid { stroke: var(--line); stroke-width: 1; }
-#chart .ax { fill: var(--muted); font: 12px var(--mono); }
-#chart .act { fill: none; stroke: var(--field); stroke-width: 2.5; stroke-linejoin: round; }
-#chart .actdot { fill: var(--field); }
-#chart .bt { fill: none; stroke: var(--grain); stroke-width: 2; stroke-dasharray: 5 4; }
-#chart .band { fill: var(--grain-soft); stroke: var(--grain); stroke-width: 1; }
-#chart .link { stroke: var(--grain); stroke-width: 1.5; stroke-dasharray: 2 4; fill: none; }
-#chart .fcdot { fill: var(--grain); stroke: var(--surface); stroke-width: 2; }
-#chart .fclab { fill: var(--grain); font: 600 13px var(--mono); }
-
-.grid2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; }
-@media (max-width: 900px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
-.block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.hint { color: var(--muted); font-size: 15px; max-width: 70ch; }
-.scroll { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 14px; }
-th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-tr.best td { background: var(--grain-soft); }
-.pos { color: var(--good); }
-.neg { color: var(--bad); }
-.yearscroll { max-height: 420px; overflow: auto; }
-
-.data { display: flex; flex-direction: column; gap: 16px; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
-label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
-input, select, textarea { font: 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
-input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--grain); outline-offset: 1px; }
-.dt input { width: 100%; min-width: 64px; font-family: var(--mono); font-variant-numeric: tabular-nums; padding: 4px 6px; }
-.dt td { padding: 3px 4px; }
-button { font: 500 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
-button:hover { border-color: var(--muted); }
-button.primary { background: var(--forest); border-color: var(--forest); color: var(--forest-ink); }
-button.del { padding: 3px 8px; color: var(--muted); }
-button.warn { border-color: var(--bad); color: var(--bad); }
-.target { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
-.target input { width: 120px; font-family: var(--mono); }
-.import { display: flex; flex-direction: column; gap: 8px; }
-.import textarea { width: 100%; min-height: 90px; font-family: var(--mono); font-size: 13px; box-sizing: border-box; }
-.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.msg { font-size: 13px; color: var(--muted); }
-.how { display: flex; flex-direction: column; gap: 10px; }
-.how ul { margin: 0; padding-left: 20px; color: var(--muted); max-width: 80ch; display: flex; flex-direction: column; gap: 6px; }
-details summary { cursor: pointer; font-weight: 500; }
-.bayes-ctl { display: flex; flex-wrap: wrap; gap: 12px; }
-.bayes-ctl input { width: 110px; font-family: var(--mono); }
-.risk { font-family: var(--display); font-size: 40px; line-height: 1; color: var(--bad); font-variant-numeric: tabular-nums; }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
-.kv dt { color: var(--muted); }
-.kv dd { margin: 0; text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
-#dens svg { display: block; width: 100%; height: auto; }
-#dens .grid { stroke: var(--line); stroke-width: 1; }
-#dens .ax { fill: var(--muted); font: 12px var(--mono); }
-#dens .curve { fill: var(--grain-soft); stroke: var(--grain); stroke-width: 2; }
-#dens .below { fill: var(--bad-soft); stroke: none; }
-#dens .thr { stroke: var(--bad); stroke-width: 1.5; stroke-dasharray: 4 3; }
-#dens .thrlab { fill: var(--bad); font: 600 12px var(--mono); }
-#dens .ci { fill: var(--grain); opacity: .55; }
-#dens .mid { stroke: var(--grain); stroke-width: 1.5; }
-.legend i.below { width: 12px; height: 12px; border: 0; background: var(--bad-soft); outline: 1px solid var(--bad); }
-.legend i.ci { width: 18px; height: 6px; border: 0; background: var(--grain); opacity: .55; }
-.verdict { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; font-size: 17px; }
-.verdict:empty { display: none; }
-.verdict > * { grid-column: span 12; }
-@media (min-width: 761px) {
-  .verdict > .c-main { grid-column: span 7; }
-  .verdict > .c-chance { grid-column: span 5; }
-  .verdict > .c-acc, .verdict > .c-tip { grid-column: span 6; }
-}
-.c-main, .c-chance, .c-tip { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; }
-.c-text { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.c-acc { display: flex; flex-direction: column; gap: 10px; }
-@media (max-width: 520px) { .c-main .art, .c-tip .art { display: none; } .c-chance .art { width: 90px; height: 90px; } }
-.v-status { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
-.v-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; }
-.v-dot.bad { background: var(--bad); } .v-dot.mid { background: var(--leaf-3); } .v-dot.good { background: var(--good); }
-.v-big { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 4.6vw, 38px); line-height: 1.12; text-wrap: balance; }
-.v-num { font-family: var(--display); font-weight: 700; font-size: clamp(38px, 6vw, 52px); line-height: 1; color: var(--forest); font-variant-numeric: tabular-nums; }
-.v-num small { font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--muted); margin-left: 6px; }
-.v-lead { font-size: 18px; max-width: 52ch; text-wrap: pretty; }
-.c-sub { color: var(--muted); font-size: 16px; max-width: 36ch; }
-.w-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px 24px; margin-top: 14px; }
-.w-item { display: flex; gap: 14px; align-items: center; }
-.w-ic { flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--grain-soft); color: var(--forest); position: relative; }
-.w-ic svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.w-ic i { position: absolute; right: -2px; bottom: -2px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--surface); display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 700; color: var(--surface); }
-.w-ic i.bad { background: var(--bad); } .w-ic i.good { background: var(--good); } .w-ic i.mid { background: var(--leaf-3); }
-.w-item b { display: block; font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.2; }
-.w-item p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
-.w-t { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.wx { display: flex; flex-direction: column; gap: 16px; }
-.wx-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
-.wx-ctl { display: flex; flex-wrap: wrap; gap: 8px; }
-.wx-ctl select, .wx-ctl button { font-size: 15px; padding: 8px 12px; border-radius: 10px; }
-.wx-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 24px; align-items: center; }
-@media (max-width: 760px) { .wx-grid { grid-template-columns: minmax(0, 1fr); } }
-.wx-now { display: flex; gap: 18px; align-items: center; }
-.wx-ic { flex: none; width: 72px; height: 72px; border-radius: 50%; background: var(--grain-soft); color: var(--forest); display: grid; place-items: center; }
-.wx-ic svg { width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.wx-t { font-family: var(--display); font-weight: 700; font-size: 52px; line-height: 1; color: var(--forest); font-variant-numeric: tabular-nums; }
-.wx-d { font-size: 18px; font-weight: 500; }
-.wx-rain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-@media (max-width: 520px) { .wx-rain { grid-template-columns: minmax(0, 1fr); } }
-.wx-cell { border-top: 2px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 2px; }
-.wx-cell b { font-family: var(--display); font-size: 30px; font-weight: 700; color: var(--forest); font-variant-numeric: tabular-nums; }
-.wx-cell .w-t { margin: 0; }
-.wx-cell span { font-size: 14px; color: var(--muted); }
-.wx-tip { background: var(--grain-soft); border-radius: 10px; padding: 10px 14px; font-size: 16px; max-width: 80ch; }
-.tip-serif { font-family: var(--display); font-size: 19px; line-height: 1.45; max-width: 46ch; }
-.bags { display: flex; flex-wrap: wrap; gap: 6px; }
-.bag { width: 34px; height: 40px; }
-.bag path { stroke-width: 1.6; stroke-linejoin: round; }
-.bag.full path { fill: var(--grain); stroke: var(--grain); }
-.bag.extra path { fill: var(--good); stroke: var(--good); }
-.bag.empty path { fill: none; stroke: var(--muted); stroke-dasharray: 3 2; }
-.bag .tie { fill: none !important; stroke: var(--surface) !important; stroke-dasharray: none !important; stroke-width: 2; }
-.bag.empty .tie { stroke: var(--muted) !important; }
-.bags-cap { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; color: var(--muted); margin-top: -10px; }
-.bags-cap i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
-.bags-cap i.full { background: var(--grain); } .bags-cap i.extra { background: var(--good); } .bags-cap i.empty { border: 1.5px dashed var(--muted); }
-.v-exact summary { cursor: pointer; color: var(--muted); font-size: 15px; }
-.v-exact p { margin: 8px 0 0; font-size: 15px; max-width: 72ch; }
-.v-note { color: var(--muted); font-size: 14px; max-width: 80ch; }
-.garden { display: flex; flex-direction: column; gap: 16px; font-size: 17px; }
-.garden h2 { font-size: 22px; }
-.g-weather { display: flex; flex-wrap: wrap; gap: 14px 24px; }
-.seg { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.seg legend { font-size: 15px; color: var(--muted); padding: 0; margin-bottom: 6px; width: 100%; }
-.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.seg label { cursor: pointer; padding: 9px 14px; border: 1px solid var(--line); border-radius: 99px; font-size: 16px; background: var(--bg); }
-.seg input:checked + label { background: var(--forest); border-color: var(--forest); color: var(--surface); font-weight: 600; }
-.seg input:focus-visible + label { outline: 2px solid var(--grain); outline-offset: 2px; }
-.g-rows { display: flex; flex-direction: column; gap: 10px; }
-.g-row { display: grid; grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 1fr) minmax(130px, 1fr) minmax(0, 1.6fr) auto; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
-@media (max-width: 760px) { .g-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .g-row .g-res { grid-column: 1 / -1; } }
-.g-row select, .g-row input { font-size: 16px; padding: 8px 10px; width: 100%; box-sizing: border-box; }
-.g-qty { display: flex; align-items: center; gap: 8px; }
-.g-qty input { width: 90px; font-family: var(--mono); }
-.g-qty span { color: var(--muted); font-size: 15px; white-space: nowrap; }
-.g-res b { font-family: var(--display); font-weight: 500; font-size: 20px; }
-.g-res small { display: block; color: var(--muted); font-size: 14px; }
-.g-total { background: var(--grain-soft); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
-.g-total:empty { display: none; }
-.g-total .big { font-family: var(--display); font-weight: 600; font-size: clamp(24px, 5vw, 34px); }
-.explain { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin: 0; }
-@media (max-width: 700px) { .explain { grid-template-columns: minmax(0, 1fr); } }
-.explain dt { font-weight: 600; }
-.explain dd { margin: 2px 0 0; color: var(--muted); }
-.source { color: var(--muted); font-size: 13px; max-width: 90ch; margin: 0; }
-details.expert { border-top: 1px solid var(--line); padding-top: 16px; }
-details.expert > summary { font-family: var(--display); font-size: 16px; font-weight: 500; cursor: pointer; padding: 4px 0; }
-.expert-body { display: flex; flex-direction: column; gap: 32px; padding-top: 20px; }
-@media (prefers-reduced-motion: no-preference) { button { transition: border-color .15s; } }
-</style>
+<link rel="stylesheet" href="yield-forecast.css?v=15">
+<style>/* Build boundary: shared design rules live in yield-forecast.css. */</style>
 </head>
 <body>
-<div class="app">
-<aside class="side">
-  <a class="brand" href="#verdict" aria-label="Урожай — на главную">
-    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 34C16 24 22 15 31 7"/><path d="M20 22c-6 0-10-3-11-9 6 0 10 3 11 9z"/><path d="M24 16c0-6 3-9 8-10 0 6-3 9-8 10z"/><path d="M16 28c-5 1-8-1-10-5 5-1 8 1 10 5z"/><path d="M22 23c5-2 9-1 11 3-5 2-9 1-11-3z"/></svg>
-    <span>Урожай</span>
+<div class="app-shell">
+<aside class="sidebar">
+  <a class="brand" href="#verdict" aria-label="Crop Yield Forecast — главная">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" focusable="false"><path d="M24 37V22m0 7c-8 0-12-5-12-12 7 0 12 4 12 12Zm0-9c0-7 5-12 12-12 0 7-5 12-12 12ZM11 36c7-3 19-3 26 0m-22 5c6-2 14-2 20 0"/></svg></span>
+    <span><b>Crop Yield Forecast</b><small>AGRICULTURAL INTELLIGENCE</small></span>
   </a>
-  <nav aria-label="Разделы">
+  <div class="sidebar-season">
+    <span>Сезон прогноза</span>
+    <label class="season-control" for="t-year"><input id="t-year" inputmode="numeric" aria-label="Год прогноза"><span class="sr-only" id="seasonChip" aria-live="polite"></span></label>
+  </div>
+  <nav class="app-navigation" aria-label="Основная навигация">
     <ul class="nav">
       <li><a href="#verdict" class="on"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></svg>Главная</a></li>
       <li><a href="#pogoda"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3 3 0 0 0 7 18z"/></svg>Погода</a></li>
@@ -290,78 +38,95 @@ details.expert > summary { font-family: var(--display); font-size: 16px; font-we
       <li><a href="#dannye"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg>Данные</a></li>
     </ul>
   </nav>
-  <div class="side-foot">
-    <div class="ring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9M12 12c0-4 3-7 8-7 0 5-3 7-8 7zM12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 5.5 7 5.5z"/></svg></div>
-    <div>Хорошего урожая<br>и тёплого лета!</div>
+  <div class="sidebar-location">
+    <span class="sidebar-label">Регион мониторинга</span>
+    <label class="region-control" for="wx-city"><select id="wx-city"></select></label>
+    <button class="geo-button" id="wx-geo" aria-label="Определить моё место">Определить моё место</button>
   </div>
+  <div class="sidebar-footer"><span class="live-dot"></span><div><b>Сезон активен</b><small>Данные синхронизированы<br>с прогнозной моделью</small></div></div>
 </aside>
 
-<main class="wrap">
+<main class="workspace">
   <header class="topbar">
-    <div>
-      <h1>Каким будет урожай?</h1>
-      <p class="lead">Сравниваем погоду этого лета с прошлыми годами. Простыми словами.</p>
+    <div class="intro-heading">
+      <div class="section-kicker">ОБЗОР СЕЗОНА</div>
+      <h1>Урожай начинается<br>с точного прогноза.</h1>
     </div>
-    <span class="season" id="seasonChip"></span>
+    <div class="overview-copy">
+      <div class="topbar-actions">
+        <div class="unit-toggle" role="group" aria-label="Единицы измерения">
+          <span class="unit-toggle-label">Единицы:</span>
+          <div class="unit-pills">
+            <button type="button" class="unit-pill" data-unit="t">т/га</button>
+            <button type="button" class="unit-pill" data-unit="c">ц/га</button>
+          </div>
+        </div>
+        <a class="overview-link" href="#grafik">Изучить динамику урожая <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="lead">Оценка урожайности на основе погоды и прошлых сезонов — для планирования работ и своевременной подготовки.</p>
+    </div>
   </header>
   <div class="issues" id="issues"></div>
 
-  <section class="card wx" id="pogoda">
-    <div class="wx-head">
-      <div class="lbl">Погода сейчас</div>
-      <div class="wx-ctl">
-        <label for="wx-city" class="sr">Город</label>
-        <select id="wx-city"></select>
-        <button id="wx-geo">Моё место</button>
+  <div class="overview-grid">
+    <section class="verdict" id="verdict" aria-live="polite"></section>
+    <section class="card wx" id="pogoda">
+      <div class="wx-head">
+        <div><div class="section-kicker">УСЛОВИЯ СЕЗОНА</div><h2>Погода</h2></div>
+        <span class="wx-attribution">Данные Open-Meteo</span>
       </div>
-    </div>
-    <div id="wx-body" aria-live="polite"><p class="c-sub">Загружаем погоду…</p></div>
-    <p class="v-note">Погода и прогноз осадков: <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0). Обновляются при открытии страницы.</p>
-  </section>
-
-  <section class="verdict" id="verdict" aria-live="polite"></section>
+      <div id="wx-body" aria-live="polite"><p class="c-sub">Загружаем погоду…</p></div>
+      <p class="v-note">Погода и прогноз осадков: <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0). Обновляются при открытии страницы.</p>
+    </section>
+  </div>
 
   <section class="garden card" id="ogorod">
-    <h2>Посчитайте урожай своего огорода</h2>
-    <p class="hint">Выберите, что вы сажаете и сколько. Мы прикинем, сколько можно собрать при погоде этого лета.</p>
-    <div class="g-weather">
-      <fieldset class="seg"><legend>Каким было лето?</legend>
-        <input type="radio" name="g-heat" id="g-heat-cool" value="cool"><label for="g-heat-cool">Прохладное</label>
-        <input type="radio" name="g-heat" id="g-heat-normal" value="normal"><label for="g-heat-normal">Обычное</label>
-        <input type="radio" name="g-heat" id="g-heat-hot" value="hot"><label for="g-heat-hot">Жаркое</label>
-      </fieldset>
-      <fieldset class="seg"><legend>Дожди</legend>
-        <input type="radio" name="g-rain" id="g-rain-dry" value="dry"><label for="g-rain-dry">Сухо</label>
-        <input type="radio" name="g-rain" id="g-rain-normal" value="normal"><label for="g-rain-normal">Как обычно</label>
-        <input type="radio" name="g-rain" id="g-rain-wet" value="wet"><label for="g-rain-wet">Дождливо</label>
-      </fieldset>
-      <fieldset class="seg"><legend>Как вы поливаете?</legend>
-        <input type="radio" name="g-water" id="g-water-regular" value="regular"><label for="g-water-regular">Регулярно</label>
-        <input type="radio" name="g-water" id="g-water-some" value="some"><label for="g-water-some">Иногда</label>
-        <input type="radio" name="g-water" id="g-water-none" value="none"><label for="g-water-none">Не поливаю</label>
-      </fieldset>
+    <div class="garden-heading"><div><div class="section-kicker">КАЛЬКУЛЯТОР ОГОРОДА</div><h2>План урожая по грядкам</h2><p class="hint">Добавьте культуры, площадь и условия сезона — результат пересчитается автоматически.</p></div><span class="garden-step">01 <i>/</i> 02</span></div>
+    <div class="garden-workspace">
+      <div class="garden-inputs">
+        <div class="g-weather">
+          <fieldset class="seg"><legend>Температура лета</legend>
+            <input type="radio" name="g-heat" id="g-heat-cool" value="cool"><label for="g-heat-cool">Прохладное</label>
+            <input type="radio" name="g-heat" id="g-heat-normal" value="normal"><label for="g-heat-normal">Обычное</label>
+            <input type="radio" name="g-heat" id="g-heat-hot" value="hot"><label for="g-heat-hot">Жаркое</label>
+          </fieldset>
+          <fieldset class="seg"><legend>Количество дождей</legend>
+            <input type="radio" name="g-rain" id="g-rain-dry" value="dry"><label for="g-rain-dry">Сухо</label>
+            <input type="radio" name="g-rain" id="g-rain-normal" value="normal"><label for="g-rain-normal">Как обычно</label>
+            <input type="radio" name="g-rain" id="g-rain-wet" value="wet"><label for="g-rain-wet">Дождливо</label>
+          </fieldset>
+          <fieldset class="seg"><legend>Полив</legend>
+            <input type="radio" name="g-water" id="g-water-regular" value="regular"><label for="g-water-regular">Регулярно</label>
+            <input type="radio" name="g-water" id="g-water-some" value="some"><label for="g-water-some">Иногда</label>
+            <input type="radio" name="g-water" id="g-water-none" value="none"><label for="g-water-none">Нет</label>
+          </fieldset>
+        </div>
+        <p class="msg" id="g-auto"></p>
+        <div class="g-rows" id="g-rows"></div>
+        <div class="garden-actions"><button class="primary" id="g-add">Добавить грядку <span aria-hidden="true">+</span></button><button id="g-reset">Вернуть пример</button></div>
+      </div>
+      <aside class="garden-result">
+        <div class="result-label">ОБЩИЙ РЕЗУЛЬТАТ</div>
+        <div class="g-total" id="g-total" aria-live="polite"></div>
+        <p class="v-note">Ориентировочная оценка для открытого грунта и теплиц. Сорт, почва и уход влияют на фактический урожай. Грядки сохраняются только в этом браузере.</p>
+      </aside>
     </div>
-    <p class="msg" id="g-auto"></p>
-    <div class="g-rows" id="g-rows"></div>
-    <div class="row"><button id="g-add">Добавить грядку</button><button id="g-reset">Вернуть пример</button></div>
-    <div class="g-total" id="g-total" aria-live="polite"></div>
-    <p class="v-note">Средние урожаи взяты из справочников огородника для открытого грунта и теплиц. Сорт, почва и уход сильно меняют результат, поэтому это ориентир, а не точный расчёт. Ваши грядки сохраняются только в этом браузере.</p>
   </section>
 
-  <section class="block" id="grafik">
-    <h2>Урожай по годам</h2>
-    <p class="hint">Зелёная линия — сколько собирали на самом деле. Чем выше линия, тем лучше был урожай. Видно, что после жарких и сухих лет она проваливается вниз. Пунктир — наши расчёты для прошлых лет: чем ближе он к зелёной линии, тем лучше работает прогноз.</p>
-    <figure class="chart">
-      <div class="legend">
-        <span><i></i>Сколько собрали на самом деле</span>
-        <span><i class="bt"></i>Наш расчёт для прошлых лет</span>
-        <span><i class="fcm"></i>Прогноз на этот год</span>
-      </div>
+  <section class="history-section" id="grafik">
+    <div class="history-intro">
+      <div class="section-kicker">АНАЛИТИКА СЕЗОНОВ</div>
+      <h2>Как менялся урожай</h2>
+      <p class="hint">Факт за год, проверка прогноза по прошлым сезонам и текущая оценка на одной шкале.</p>
+      <div class="history-key"><span><i class="key-fact"></i>Фактический урожай</span><span><i class="key-model"></i>Расчёт модели</span><span><i class="key-current"></i>Прогноз</span></div>
+    </div>
+    <figure class="chart history-chart">
       <div id="chart"></div>
       <p class="msg" id="chartUnit"></p>
     </figure>
   </section>
 
+  <div class="insight-grid">
   <section class="block" id="slova">
     <h2>Что значат слова на сайте</h2>
     <dl class="explain card">
@@ -373,15 +138,15 @@ details.expert > summary { font-family: var(--display); font-size: 16px; font-we
   </section>
 
   <div class="banner">
-    <svg viewBox="0 0 48 48" aria-hidden="true" class="art"><path class="st" d="M24 44V20"/><ellipse class="l1" cx="17" cy="22" rx="5" ry="11" transform="rotate(-35 17 22)"/><ellipse class="l2" cx="31" cy="18" rx="5" ry="11" transform="rotate(35 31 18)"/><ellipse class="l3" cx="24" cy="10" rx="4" ry="8"/></svg>
     <div class="t"><b>А как дела в вашем огороде?</b><span>Посчитайте, сколько соберёте с грядок при погоде этого лета.</span></div>
     <a class="btn-dark" href="#ogorod">Посчитать <span aria-hidden="true">→</span></a>
+  </div>
   </div>
 
   <p class="source" id="demoNote" hidden><b>Откуда данные.</b> Пшеница, Казахстан в целом, 2000–2025. Урожай за 2000–2024 годы — FAOSTAT (ООН), за 2025 год — предварительные итоги Бюро национальной статистики РК (15,8 ц/га). Погода — NASA POWER, среднее по трём точкам зернового пояса: Костанайская, Северо-Казахстанская и Акмолинская области. Официальных итогов урожая 2026 года ещё нет.</p>
 
   <details class="expert" id="specialist">
-    <summary>Подробности для специалистов</summary>
+    <summary><span>Аналитика для специалистов</span><small>Методы · байесовская модель · проверка точности</small></summary>
     <div class="expert-body">
 
   <section class="block">
@@ -441,41 +206,45 @@ details.expert > summary { font-family: var(--display); font-size: 16px; font-we
   </details>
 
   <details class="expert" id="dannye">
-    <summary>Изменить данные или загрузить свои</summary>
+    <summary><span>Данные и настройки прогноза</span><small>Исторические сезоны · CSV · параметры модели</small></summary>
     <div class="expert-body">
   <section class="data">
-    <div class="toolbar">
-      <label class="f" for="unit">Единицы урожайности
-        <select id="unit"><option value="t">т/га</option><option value="c">ц/га</option></select>
-      </label>
-      <label class="f" for="minTrain">Минимум лет для обучения
-        <input id="minTrain" type="number" min="3" max="30" style="width:90px">
-      </label>
-      <label class="f" for="method">Метод для прогноза
-        <select id="method"></select>
-      </label>
-      <div class="row">
-        <button id="demoBtn">Загрузить данные FAOSTAT</button>
-        <button id="clearBtn">Очистить данные</button>
-        <button id="copyBtn">Скопировать CSV</button>
+    <div class="data-config">
+      <div class="toolbar">
+        <label class="f" for="unit">Единицы урожайности
+          <select id="unit"><option value="t">т/га</option><option value="c">ц/га</option></select>
+        </label>
+        <label class="f" for="minTrain">Минимум лет для обучения
+          <input id="minTrain" type="number" min="3" max="30" style="width:90px">
+        </label>
+        <label class="f" for="method">Метод для прогноза
+          <select id="method"></select>
+        </label>
+        <div class="row data-actions">
+          <button id="demoBtn">Загрузить FAOSTAT</button>
+          <button id="clearBtn">Очистить</button>
+          <button id="copyBtn">Скопировать CSV</button>
+        </div>
+      </div>
+
+      <div class="target">
+        <label class="f" for="t-precip">Осадки май–июль, мм<input id="t-precip" inputmode="decimal"></label>
+        <label class="f" for="t-hot">Градусо-дни &gt;30 °C, июнь–август<input id="t-hot" inputmode="decimal"></label>
+        <label class="f" for="area">Площадь, га (для валового сбора)<input id="area" inputmode="decimal" placeholder="необязательно"></label>
+        <p class="msg">Погода на год прогноза нужна только методам «Тренд + погода» и «Байесовская регрессия». Если сезон ещё идёт, вводите фактические значения на дату прогноза или ожидаемые.</p>
       </div>
     </div>
 
-    <div class="target">
-      <label class="f" for="t-year">Год прогноза<input id="t-year" inputmode="numeric"></label>
-      <label class="f" for="t-precip">Осадки май–июль, мм<input id="t-precip" inputmode="decimal"></label>
-      <label class="f" for="t-hot">Градусо-дни &gt;30 °C, июнь–август<input id="t-hot" inputmode="decimal"></label>
-      <label class="f" for="area">Площадь, га (для валового сбора)<input id="area" inputmode="decimal" placeholder="необязательно"></label>
-      <p class="msg" style="flex-basis:100%">Погода на год прогноза нужна только методам «Тренд + погода» и «Байесовская регрессия». Если сезон ещё идёт, вводите фактические значения на дату прогноза или ожидаемые.</p>
+    <div class="data-records">
+      <div class="data-record-head"><div><h3>Исторические данные</h3><p class="msg">Каждая строка — один сезон. Погодные поля можно оставить пустыми.</p></div><button id="addBtn">Добавить год <span aria-hidden="true">+</span></button></div>
+      <div class="scroll">
+        <table class="dt">
+          <thead><tr><th>Год</th><th>Урожайность</th><th>Осадки май–июль, мм</th><th>Градусо-дни &gt;30 °C, июнь–август</th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="msg data-note">Редактируйте значения прямо в таблице. Изменения автоматически сохраняются в этом браузере.</p>
     </div>
-
-    <div class="scroll">
-      <table class="dt">
-        <thead><tr><th>Год</th><th>Урожайность</th><th>Осадки май–июль, мм</th><th>Градусо-дни &gt;30 °C, июнь–август</th><th></th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-    <div class="row"><button id="addBtn">Добавить год</button><span class="msg">Погоду можно не заполнять: тогда сравниваются только среднее и тренд. Данные сохраняются в этом браузере.</span></div>
 
     <details class="import">
       <summary>Импорт из CSV или Excel</summary>
@@ -490,6 +259,14 @@ details.expert > summary { font-family: var(--display); font-size: 16px; font-we
   </section>
     </div>
   </details>
+  <nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
+    <a href="#verdict" class="m-nav-item on"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></svg><span>Главная</span></a>
+    <a href="#pogoda" class="m-nav-item"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3 3 0 0 0 7 18z"/></svg><span>Погода</span></a>
+    <a href="#ogorod" class="m-nav-item"><svg viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4 3-7 8-7 0 5-3 7-8 7zM12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 5.5 7 5.5z"/></svg><span>Огород</span></a>
+    <a href="#grafik" class="m-nav-item"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l3-4 3 2 4-6"/></svg><span>График</span></a>
+    <a href="#specialist" class="m-nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Анализ</span></a>
+    <a href="#dannye" class="m-nav-item"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg><span>Данные</span></a>
+  </nav>
 </main>
 </div>
 
@@ -727,7 +504,7 @@ function stepDec(step) { let d = 0; while (d < 4 && Math.abs(Math.round(step * 1
 function drawChart(R) {
   const box = $('chart');
   if (!R.rows.length) { box.innerHTML = '<p class="msg">Нет данных для графика.</p>'; return; }
-  const W = Math.max(300, box.clientWidth || 640), H = W < 520 ? 240 : 290;
+  const W = Math.max(240, box.clientWidth || 640), H = W < 520 ? 240 : 290;
   const L = 46, Rp = 20, T = 16, B = 28;
   const key = R.chosen && R.chosen.key, fv = R.fcv && key ? R.fcv[key] : null;
   const xs = R.rows.map(r => r.year); if (fv != null) xs.push(R.ty);
@@ -913,9 +690,9 @@ function renderVerdict(R) {
   const v = R.stats && R.fcv ? R.fcv[R.chosen.key] : null;
   $('seasonChip').textContent = Number.isFinite(R.ty) ? `Сезон ${R.ty}` : 'Сезон';
   if (v == null) {
-    box.innerHTML = `<div class="card c-main"><div class="c-text"><div class="lbl">Прогноз урожая</div><div class="v-big">Прогноз пока не построен</div><p class="v-lead">${R.stats
+    box.innerHTML = `<div class="forecast-dashboard forecast-empty"><div class="c-main"><div class="hero-top"><div class="lbl">Прогноз урожая</div></div><div class="v-big">Прогноз пока не построен</div><p class="v-lead">${R.stats
       ? 'Укажите год прогноза и погоду этого сезона в разделе «Данные».'
-      : 'Нужен урожай хотя бы за 9–10 прошлых лет. Добавьте его в разделе «Данные».'}</p></div>${ART.plant}</div>`;
+      : 'Нужен урожай хотя бы за 9–10 прошлых лет. Добавьте его в разделе «Данные».'}</p></div><aside class="forecast-context forecast-context-empty"><span class="context-label">Как начать</span><p>Добавьте исторические данные — и здесь появятся прогноз, риск недобора и факторы сезона.</p><a href="#dannye">Перейти к данным <span aria-hidden="true">→</span></a></aside></div>`;
     return;
   }
   const base = usual(R), last = R.rows[R.rows.length - 1];
@@ -924,18 +701,23 @@ function renderVerdict(R) {
     : diff < 5 ? ['mid', 'Как в обычный год'] : diff < 15 ? ['good', 'Немного лучше обычного'] : ['good', 'Заметно лучше обычного'];
   const crop = S.demo ? 'Пшеница · Казахстан' : 'Ваш урожай';
   const bags = Math.round(10 * v / base);
-  let h = `<div class="card c-main"><div class="c-text"><div class="lbl">Прогноз урожая · ${esc(crop)}</div>
-    <div class="v-big">${lvl[1]}</div>
-    <span class="v-status"><span class="v-dot ${lvl[0]}" aria-hidden="true"></span>${diff === 0 ? 'Как в среднем за 10 лет' : `${diff < 0 ? 'Меньше' : 'Больше'} обычного на ${Math.abs(diff)}%`}</span>
-    <p class="v-lead">${bags === 10
+  const index = Math.max(0, Math.min(150, v / base * 100));
+  const meter = (index / 150 * 100).toFixed(1);
+  const main = `<article class="c-main"><div class="hero-top"><div class="lbl">Прогноз урожая · ${esc(crop)}</div></div>
+    <div class="hero-reading"><div class="yield-reading">${fmt(v)}<small>${unit()}</small></div><div class="hero-status"><span class="status-pill ${lvl[0]}">${lvl[1]}</span><p>${diff === 0 ? 'На уровне среднего за 10 лет' : `${diff < 0 ? 'Меньше' : 'Больше'} обычного на ${Math.abs(diff)}%`}</p></div></div>
+    <div class="yield-comparison" role="img" aria-label="Прогноз составляет ${Math.round(v / base * 100)} процентов от среднего урожая за последние десять лет">
+      <div class="comparison-caption"><span>К обычному урожаю</span><b>${bags} ${bagWord(bags)} из 10</b></div>
+      <div class="comparison-track" style="--yield-progress:${meter}%"><span class="comparison-fill"></span><span class="comparison-average"></span></div>
+      <div class="comparison-scale"><span>0</span><span>Обычный год</span><span>150%</span></div>
+    </div>
+    <p class="hero-note">${bags === 10
       ? 'Если в обычный год с поля собирают <b>10 мешков</b> зерна, то в этом году соберут примерно столько же.'
-      : `Если в обычный год с поля собирают <b>10 мешков</b> зерна, то в этом году соберут около <b>${bags}</b>.`}</p>
-    ${bagsRow(bags)}</div>${ART.plant}</div>`;
+      : `Если в обычный год с поля собирают <b>10 мешков</b> зерна, то в этом году соберут около <b>${bags}</b>.`}</p></article>`;
+  let risk = '';
   if (R.fcDist) {
     const p = distCdf(R.fcDist, base), n = Math.max(0, Math.min(10, Math.round(p * 10)));
-    h += `<div class="card c-chance"><div class="c-text"><div class="lbl">Риск неурожая</div>
-      <div class="v-num">${n === 0 ? '&lt;1' : n}<small>из 10</small></div>
-      <p class="c-sub">${n === 0 ? 'Меньше 1 шанса' : `${n} ${chances(n)}`} из 10, что урожай окажется меньше обычного.</p></div>${ART.branch}</div>`;
+    risk = `<section class="c-chance"><div class="context-label">Риск недобора</div><div class="risk-score"><strong>${n === 0 ? '&lt;1' : n}</strong><span>из 10</span></div>
+      <p>${n === 0 ? 'Меньше 1 шанса' : `${n} ${chances(n)}`} из 10, что урожай окажется ниже среднего.</p><div class="risk-foot">Оценка по погоде и прошлым сезонам</div></section>`;
   }
 
   // Почему так: погода сезона по сравнению с прошлыми годами
@@ -957,22 +739,22 @@ function renderVerdict(R) {
   const tr = trendFit(R.rows), per10 = toC(tr({ year: 10 }) - tr({ year: 0 }));
   if (per10 > 0.2) cards.push(['good', ICON.sprout, 'Сорта и техника', 'Урожаи растут', 'С каждым годом урожаи понемногу растут, и это немного выручает.']);
   const mark = { bad: '−', good: '+', mid: '≈' };
-  if (cards.length) h += `<div class="card c-weather"><div class="lbl">Почему так: погода этого лета</div><div class="w-items">${cards.map(([c, icon, t, b, s]) =>
-    `<div class="w-item"><span class="w-ic" aria-hidden="true">${icon}<i class="${c}">${mark[c]}</i></span><div><div class="w-t">${t}</div><b>${b}</b><p>${s}</p></div></div>`).join('')}</div></div>`;
+  const factors = cards.length ? `<section class="c-weather"><div class="context-label">Факторы сезона</div><div class="w-items">${cards.map(([c, icon, t, b, s]) =>
+    `<div class="w-item"><span class="w-ic ${c}" aria-hidden="true">${icon}</span><div><div class="w-t">${t}<i>${mark[c]}</i></div><b>${b}</b><details class="factor-more"><summary>Почему важно</summary><p>${s}</p></details></div></div>`).join('')}</div></section>` : '';
 
   const errPct = Math.round(R.chosen.mae / mean(R.rows.map(r => r.y)) * 100), k = Math.max(1, Math.round(errPct / 10));
-  h += `<div class="card c-acc"><div class="lbl">Насколько точно</div><div class="v-num">±${errPct}%</div>
-    <p class="c-sub">Это примерная оценка. В прошлые годы она ошибалась в среднем на ${errPct}%, то есть примерно на ${k} ${bagWord(k)} из 10.</p>
+  const accuracy = `<section class="c-acc"><div class="accuracy-value">±${errPct}%</div><div class="accuracy-copy"><div class="context-label">Точность на прошлых сезонах</div>
+    <p>Средняя ошибка прогноза — примерно ${k} ${bagWord(k)} из 10.</p>
     <details class="v-exact"><summary>Точные цифры</summary><p>Ожидаемый урожай — ${fc1(v)} ц/га (центнеров с гектара; это ${fmt(toC(v) / 10, 2)} т с гектара)${R.interval
-      ? `, скорее всего от ${fc1(R.interval[0])} до ${fc1(R.interval[1])} ц/га` : ''}. Обычный урожай — ${fc1(base)} ц/га, это среднее за последние 10 лет. В ${last.year} году было ${fc1(last.y)} ц/га.</p></details></div>`;
+      ? `, скорее всего от ${fc1(R.interval[0])} до ${fc1(R.interval[1])} ц/га` : ''}. Обычный урожай — ${fc1(base)} ц/га, это среднее за последние 10 лет. В ${last.year} году было ${fc1(last.y)} ц/га.</p></details></div></section>`;
 
   const tips = gardenTips(heatCat, rainCat);
-  if (tips) h += `<div class="card c-tip"><div class="c-text"><div class="lbl">Совет для огорода и сада</div><p class="tip-serif">${tips}</p>${S.demo
-    ? '<p class="v-note">Погода — по северу Казахстана. Советы общие и подходят для большинства огородных культур.</p>' : ''}</div>${ART.can}</div>`;
+  const recommendation = tips ? `<section class="c-tip"><div class="recommendation-mark" aria-hidden="true">Совет</div><div class="recommendation-copy"><div class="context-label">Что можно сделать</div><p>${tips}</p>${S.demo
+    ? '<small>Погода — по северу Казахстана. Советы общие и подходят для большинства огородных культур.</small>' : ''}</div></section>` : '';
 
-  h += `<p class="v-note">Это расчёт по погоде и урожаям прошлых лет, а не официальные данные.${S.demo
-    ? ' Официальные итоги урожая публикует Бюро национальной статистики Казахстана.' : ''}</p>`;
-  box.innerHTML = h;
+  const note = `Это расчёт по погоде и урожаям прошлых лет, а не официальные данные.${S.demo
+    ? ' Официальные итоги урожая публикует Бюро национальной статистики Казахстана.' : ''}`;
+  box.innerHTML = `<div class="forecast-dashboard">${main}<aside class="forecast-context">${risk}${factors}</aside><div class="forecast-bottom">${accuracy}${recommendation}</div></div><p class="v-note">${note}</p>`;
 }
 
 function renderBayes(R) {
@@ -1002,7 +784,7 @@ function renderBayes(R) {
 
 function drawDensity(d, thr) {
   const box = $('dens');
-  const W = Math.max(300, box.clientWidth || 640), H = W < 520 ? 200 : 240;
+  const W = Math.max(180, box.clientWidth || 640), H = W < 520 ? 200 : 240;
   const L = 16, Rp = 16, T = 18, B = 30;
   const x0 = d.mean - 4 * d.scale, x1 = d.mean + 4 * d.scale;
   const pdf = x => tPdf((x - d.mean) / d.scale, d.nu) / d.scale;
@@ -1144,7 +926,9 @@ $('g-rows').addEventListener('change', e => {
   saveG(); renderGardenRows(); renderGarden();
 });
 $('g-rows').addEventListener('click', e => {
-  const i = e.target.dataset.gdel; if (i == null) return;
+  const btn = e.target.closest('[data-gdel]');
+  if (!btn) return;
+  const i = btn.dataset.gdel;
   G.rows.splice(+i, 1); saveG(); renderGardenRows(); renderGarden();
 });
 $('g-add').onclick = () => { G.rows.push({ crop: 'tomato', qty: '', place: 'open' }); saveG(); renderGardenRows(); renderGarden(); $(`g${G.rows.length - 1}-qty`).focus(); };
@@ -1166,13 +950,30 @@ function syncControls() {
   $('unit').value = S.unit; $('minTrain').value = S.minTrain; $('area').value = S.area || '';
   $('t-year').value = S.target.year; $('t-precip').value = S.target.precip; $('t-hot').value = S.target.hot;
   $('thr').value = S.threshold || ''; $('prior').value = S.prior === 'neutral' ? 'neutral' : 'agro';
+  document.querySelectorAll('.unit-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.unit === S.unit);
+  });
 }
+document.querySelectorAll('.unit-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (S.unit !== btn.dataset.unit) {
+      S.unit = btn.dataset.unit;
+      syncControls();
+      update();
+    }
+  });
+});
 $('thr').oninput = e => { S.threshold = e.target.value; update(); };
 $('prior').onchange = e => { S.prior = e.target.value; update(); };
 const update = () => { save(); render(); };
 
 $('rows').addEventListener('input', e => { const t = e.target; if (!t.dataset.f) return; S.rows[+t.dataset.i][t.dataset.f] = t.value; update(); });
-$('rows').addEventListener('click', e => { const i = e.target.dataset.del; if (i == null) return; S.rows.splice(+i, 1); renderRows(); update(); });
+$('rows').addEventListener('click', e => {
+  const btn = e.target.closest('[data-del]');
+  if (!btn) return;
+  const i = btn.dataset.del;
+  S.rows.splice(+i, 1); renderRows(); update();
+});
 $('addBtn').onclick = () => {
   const years = S.rows.map(r => num(r.year)).filter(Number.isFinite);
   S.rows.push({ year: years.length ? String(Math.max(...years) + 1) : '', y: '', precip: '', hot: '' });
@@ -1251,6 +1052,7 @@ $('importBtn').onclick = () => {
 
 let rz;
 window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (lastR) { drawChart(lastR); renderBayes(lastR); } }, 120); });
+$('specialist').addEventListener('toggle', () => { if ($('specialist').open && lastR) renderBayes(lastR); });
 // ---------- погода сейчас: Open-Meteo, без ключа ----------
 // В Claude-артефакте внешние запросы закрыты, поэтому блок работает только на обычном хостинге (GitHub Pages).
 const CITIES = [
@@ -1357,14 +1159,103 @@ $('wx-geo').onclick = () => {
 fillCities();
 loadWeather();
 
-// Боковое меню: подсветка раздела и раскрытие свёрнутых разделов при переходе
+// Боковое меню и мобильная навигация: подсветка раздела и следование за скроллом
+const navLinks = [...document.querySelectorAll('.nav a, .m-nav-item')];
+const sectionOrder = ['verdict', 'pogoda', 'ogorod', 'grafik', 'slova', 'specialist', 'dannye'];
+
+function setActiveNav(id) {
+  navLinks.forEach(link => {
+    const active = link.getAttribute('href') === '#' + id;
+    link.classList.toggle('on', active);
+    if (active) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  });
+}
+
 function goTo(id) {
   const el = document.getElementById(id);
-  if (el && el.tagName === 'DETAILS') el.open = true;
-  document.querySelectorAll('.nav a').forEach(x => x.classList.toggle('on', x.getAttribute('href') === '#' + id));
+  if (el) {
+    if (el.tagName === 'DETAILS') el.open = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  setActiveNav(id);
 }
-document.querySelectorAll('.nav a, .brand, .banner a').forEach(a => a.addEventListener('click', () => goTo(a.getAttribute('href').slice(1))));
-if (typeof location !== 'undefined' && /^#[\w-]+$/.test(location.hash)) goTo(location.hash.slice(1));
+
+document.querySelectorAll('.nav a, .m-nav-item, .brand, .banner a').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.slice(1);
+      goTo(targetId);
+      if (history.pushState) history.pushState(null, '', href);
+    }
+  });
+});
+
+if (typeof location !== 'undefined' && /^#[\w-]+$/.test(location.hash)) {
+  goTo(location.hash.slice(1));
+}
+
+let navFrame = 0;
+function updateActiveNavOnScroll() {
+  if (navFrame) return;
+  navFrame = requestAnimationFrame(() => {
+    navFrame = 0;
+    if (!navLinks.length) return;
+    const scrollPos = window.scrollY || window.pageYOffset;
+    const windowH = window.innerHeight;
+    const docH = document.documentElement.scrollHeight;
+    
+    // Если страница прокручена в самый низ — активен последний раздел
+    if (scrollPos + windowH >= docH - 30) {
+      setActiveNav(sectionOrder[sectionOrder.length - 1]);
+      return;
+    }
+
+    const isDesktop = window.innerWidth > 860;
+    const threshold = Math.min(240, windowH * 0.35);
+    let activeId = sectionOrder[0];
+
+    for (const id of sectionOrder) {
+      if (id === 'pogoda' && isDesktop) {
+        // На десктопе погода видна рядом с verdict в overview-grid.
+        // Подсвечиваем «Погода», когда пользователь прокрутил
+        // ниже главной карточки (c-main) — т.е. видит подкарточки
+        // «Риск недобора», «Факторы сезона», «Точность», «Что можно сделать»
+        const verdict = document.getElementById('verdict');
+        const ogorod = document.getElementById('ogorod');
+        if (verdict && ogorod) {
+          const heroCard = verdict.querySelector('.c-main');
+          const triggerEl = heroCard || verdict;
+          const triggerBottom = triggerEl.getBoundingClientRect().bottom;
+          const ogorodTop = ogorod.getBoundingClientRect().top;
+          // Если главная карточка уже уходит вверх, но огород ещё не в зоне — погода
+          if (triggerBottom < threshold * 0.6 && ogorodTop > threshold) {
+            activeId = 'pogoda';
+          }
+        }
+        continue;
+      }
+      const section = document.getElementById(id);
+      if (!section) continue;
+      const rect = section.getBoundingClientRect();
+      if (rect.top <= threshold) {
+        activeId = id;
+      }
+    }
+
+    setActiveNav(activeId);
+  });
+}
+
+window.addEventListener('scroll', updateActiveNavOnScroll, { passive: true });
+window.addEventListener('resize', updateActiveNavOnScroll);
+window.addEventListener('hashchange', () => {
+  if (location.hash) goTo(location.hash.slice(1));
+  else updateActiveNavOnScroll();
+});
+updateActiveNavOnScroll();
 
 syncControls(); renderRows(); renderGardenRows(); render();
 </script>

@@ -1,42 +1,39 @@
-# DESIGN.md — «Урожай»
+# Crop Yield Forecast — Agricultural Intelligence Platform
 
-Описание дизайна сайта прогноза урожая в формате дизайн-систем OpenDesign (DESIGN.md как «контракт бренда»).
-Источник стиля — референс «No Spend Challenge»: тёмно-зелёная боковая панель, кремовый фон, светлые карточки, заголовки с засечками, растительные иллюстрации.
+The page is structured as a simple agricultural workspace for growers and specialists. The main view presents the season estimate and regional weather first; the historical chart and garden calculator have full-width work areas. Specialist analysis and data administration remain available on demand.
 
-## Аудитория и тон
-- Обычные люди, пожилые читатели, садоводы. Не только аграрии.
-- Короткие фразы, без терминов в главных блоках. Термины (ц/га, интервал, MAE) — только в «Точных цифрах» и разделе для специалистов.
-- Сравнение через бытовые образы: «10 мешков», «8 шансов из 10».
+## Design system
 
-## Цвета (токены в `:root` страницы)
-| Токен | Значение | Роль |
+All application styles are maintained in `yield-forecast.css`, linked from the source `yield-forecast.html`.
+
+| Token | Value | Use |
 |---|---|---|
-| `--bg` | `#F3F0E8` | кремовый фон страницы |
-| `--surface` | `#FBFAF6` | карточки |
-| `--ink` | `#1F2B22` | основной текст |
-| `--muted` | `#687264` | вторичный текст |
-| `--line` | `#E4DFD3` | рамки карточек |
-| `--forest` | `#23402A` | боковая панель, главные кнопки (акцент, не больше двух мест на экран) |
-| `--grain-soft` | `#E4E8DA` | мягкая шалфейная заливка |
-| `--leaf-1/2/3` | `#3E5E3A` `#5B7F52` `#7A9A6C` | листья в иллюстрациях |
-| `--bad` / `--good` | `#A8523A` / `#3D6B45` | смысловые цвета «хуже / лучше» |
+| `--bg` | `#F6F6F0` | Warm, lightly botanical workspace background |
+| `--surface` | `#FFFFFF` | Main content surfaces |
+| `--surface-green` | `#E8EEE2` | Muted sage panels and positive states |
+| `--forest` | `#304B37` | Brand, key figures, and primary actions |
+| `--forest-light` | `#627D55` | Secondary accents and chart |
+| `--ink` | `#30382F` | Main text |
+| `--muted` | `#788073` | Supporting text |
+| `--line` | `#E7E8DE` | Soft borders and separators |
 
-Одна светлая тема — сознательный выбор («садовая тетрадь»).
+Typography uses platform fonts, with an editorial serif for headings and a clean sans-serif for interface text. The palette, spacing, surfaces, radii, and shadows are defined centrally as CSS variables. Buttons, fields, focus indicators, error notices, and reduced-motion behavior share the same visual rules.
 
-## Шрифты
-- Заголовки и крупные числа: **PT Serif** (кириллица), запас Georgia.
-- Текст: **Golos Text**, запас Segoe UI / system-ui.
-- Таблицы и данные: **IBM Plex Mono**.
-- Подписи капсом: 12px, `letter-spacing: .08em` (правило OpenDesign: не меньше .06em).
+## Page composition
 
-## Компоненты
-- **Карточка**: радиус 16px, рамка `--line`, тень `0 1px 2px` с оттенком `--forest`, внутренний отступ 22–24px.
-- **Боковая панель**: 228px, на ширине до 900px превращается в верхнюю полосу с прокручиваемым меню.
-- **Сетка главного вывода**: 12 колонок; прогноз 7 + риск 5; погода на всю ширину; точность 6 + совет 6. На телефоне всё в одну колонку.
-- **Иллюстрации**: только встроенные SVG (горшок с растением, ветка, лейка), декоративные, `aria-hidden`.
-- **Баннер** внизу: шалфейная заливка, тёмная кнопка «Посчитать →».
+- **Navigation** is a softly tinted, persistent desktop sidebar with brand, season, section links, region selector, and location action. On smaller screens it becomes a compact sticky header, with bottom navigation on phones.
+- **Season overview** uses a two-part grid: the large yield forecast and its risk, factors, and recommendation occupy the main area; current Open-Meteo conditions sit alongside it. At tablet and phone widths, the weather section moves below the forecast.
+- **Garden calculator** follows the season overview. It has a separate full-width form and a dedicated result area. Crop, quantity, growing location, per-bed result, and season settings remain visible and usable.
+- **History** follows the garden calculator as a full-width analytical section. Its chart scales to the container and keeps the measured yield, model estimate, and current forecast visually distinct.
+- **Plain-language help** and the garden shortcut form a compact supporting section.
+- **Specialist analysis** and **data management** use native disclosure panels so model details, validation tables, editable historical rows, settings, and CSV tools are available without crowding the default view.
 
-## Доступность
-- Базовый шрифт 16px, главный текст 17–18px, крупные числа 38–52px.
-- Видимый фокус у ссылок, кнопок и переключателей.
-- Смысл не только цветом: у значков погоды есть знак «+ / − / ≈», у статуса — текст.
+## Tables and responsive behavior
+
+Tables are sized for their contents rather than forced to share one layout. Method comparisons, per-year validation, and historical records have individual minimum widths and column proportions; long table views scroll inside their own containers. Numeric cells use tabular alignment, descriptions can wrap, and row hover does not alter the table geometry.
+
+Responsive breakpoints retain a desktop sidebar down to 760 px; below that it becomes a compact sticky header, with bottom navigation on phones. The forecast and weather sit side-by-side on wider screens and stack below 860 px. The document itself must not scroll horizontally; wide tables may scroll only within their local container.
+
+## Functional compatibility
+
+The frontend retains its existing IDs, selectors, event handlers, calculation methods, chart rendering, CSV format, localStorage keys, and Open-Meteo request behavior. The page source is `yield-forecast.html`; regenerate `index.html` using `node collector/build-site.mjs`.
