@@ -60,8 +60,6 @@ CDSAPI_KEY=ваш-ключ node collector/collect.mjs --weather era5
 - Погода: [NASA POWER](https://power.larc.nasa.gov/) (NASA Langley Research Center), среднее по трём точкам зернового пояса: Костанайская, Северо-Казахстанская, Акмолинская области.
 - По желанию: [ERA5](https://cds.climate.copernicus.eu/) (Copernicus Climate Change Service, лицензия CC-BY).
 
-При использовании данных указывайте источники согласно их условиям.
-
 ## Ограничения
 
 - Прогноз — оценка по погоде и прошлым урожаям, а не официальная статистика.
